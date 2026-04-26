@@ -1,0 +1,403 @@
+﻿<!DOCTYPE html>
+
+<html lang="{{ curr_lang }}">
+
+
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <title>Auth Bypass Theory - Lesson {{ level }}</title>
+
+  <style>
+    :root {
+
+      --primary-cyan: #00e5ff;
+
+      --dim-cyan: #003366;
+
+      --deep-bg: #050505;
+
+      --panel-bg: #080808;
+
+      --card-bg: #0d0d0d;
+
+      --warning-gold: #ffd700;
+
+      --error-red: #ff3e3e;
+
+    }
+
+
+
+    body {
+
+      background: radial-gradient(circle at top, rgba(0, 229, 255, 0.08), #050505 45%);
+
+      color: var(--primary-cyan);
+
+      font-family: 'Courier New', monospace;
+
+      padding: 40px;
+
+      margin: 0;
+
+      min-height: 100vh;
+
+    }
+
+
+
+    .container {
+
+      max-width: 960px;
+
+      margin: 0 auto;
+
+      background: rgba(13, 13, 13, 0.95);
+
+      border: 1px solid rgba(0, 229, 255, 0.18);
+
+      padding: 36px;
+
+      border-radius: 18px;
+
+      box-shadow: 0 0 50px rgba(0, 229, 255, 0.08);
+
+    }
+
+
+
+    h1 {
+
+      color: #fff;
+
+      text-transform: uppercase;
+
+      letter-spacing: 2px;
+
+      margin-bottom: 8px;
+
+    }
+
+
+
+    .panel-header {
+
+      margin: 18px 0 22px;
+
+      color: #a8f4ff;
+
+      text-transform: uppercase;
+
+      letter-spacing: 0.2em;
+
+      font-size: 0.82rem;
+
+    }
+
+
+
+    .split-layout {
+
+      display: grid;
+
+      grid-template-columns: 1fr;
+
+      gap: 24px;
+
+      margin-bottom: 24px;
+
+    }
+
+
+
+    .split-layout .quiz-box.hidden {
+
+      display: none !important;
+
+    }
+
+
+
+    .split-layout.quiz-mode .panel:first-child {
+
+      display: none !important;
+
+    }
+
+
+
+    @media (max-width: 860px) {
+
+      .split-layout {
+
+        grid-template-columns: 1fr;
+
+      }
+
+    }
+
+
+
+    .panel {
+
+      background: rgba(0, 0, 0, 0.72);
+
+      border: 1px solid rgba(0, 229, 255, 0.18);
+
+      border-radius: 16px;
+
+      padding: 24px;
+
+      box-shadow: inset 0 0 22px rgba(0, 229, 255, 0.04);
+
+    }
+
+
+
+    .theory-box {
+
+      background: rgba(15, 15, 15, 0.92);
+
+      border-left: 4px solid var(--warning-gold);
+
+      padding: 20px;
+
+      margin: 18px 0;
+
+      border-radius: 10px;
+      line-height: 1.8;
+    }
+
+    .quiz-box {
+      margin: 0;
+      border: none;
+      padding: 0;
+    }
+
+    .quiz-box.hidden {
+      display: none;
+    }
+
+    .quiz-box h3 {
+      margin-top: 0;
+      color: #fff;
+    }
+
+    .q-block {
+      margin-bottom: 18px;
+      padding: 16px;
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 10px;
+      border: 1px solid rgba(0, 229, 255, 0.18);
+    }
+
+    .q-block p {
+      margin: 0 0 8px 0;
+    }
+
+    .q-block label {
+      display: block;
+      margin: 5px 0;
+      font-size: 0.95rem;
+      color: #c8f5ff;
+    }
+
+    .error {
+      color: #ff7b7b;
+      margin-bottom: 12px;
+      white-space: pre-line;
+    }
+
+    .quiz-hints {
+      background: rgba(255, 215, 0, 0.1);
+      border: 1px solid var(--warning-gold);
+      border-radius: 8px;
+      padding: 15px;
+      margin: 15px 0;
+    }
+
+    .quiz-hints h4 {
+      color: var(--warning-gold);
+      margin: 0 0 10px 0;
+      font-size: 0.9rem;
+    }
+
+    .quiz-hint {
+      background: rgba(0, 229, 255, 0.1);
+      border-left: 3px solid var(--primary-cyan);
+      padding: 10px;
+      margin: 8px 0;
+      border-radius: 4px;
+    }
+
+    .quiz-hint strong {
+      color: var(--primary-cyan);
+    }
+
+    .back-btn {
+      display: inline-block;
+      padding: 12px 25px;
+      background: var(--primary-cyan);
+      color: #000;
+      text-decoration: none;
+      border-radius: 6px;
+      margin-top: 30px;
+      font-weight: bold;
+      transition: 0.3s;
+    }
+
+    .back-btn:hover {
+      background: #00ffff;
+      box-shadow: 0 0 15px rgba(0, 229, 255, 0.5);
+    }
+
+    .example {
+      background: #0a1a2e;
+      border: 1px solid #003366;
+      padding: 15px;
+      margin: 10px 0;
+      border-radius: 6px;
+    }
+
+    .proceed-btn {
+      display: inline-block;
+      padding: 10px 20px;
+      background: #00e5ff;
+      color: #000;
+      text-decoration: none;
+      border-radius: 6px;
+      font-weight: bold;
+      transition: 0.3s;
+      border: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .proceed-btn:hover {
+      background: #00ffff;
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+    }
+
+    .btn-hack {
+      margin-top: 20px;
+      background: #00e5ff;
+      color: #000;
+      border: none;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-family: inherit;
+      font-weight: bold;
+      border-radius: 6px;
+      transition: 0.3s;
+    }
+
+    .btn-hack:hover {
+      background: #00ffff;
+      box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="container">
+    <h1>LEVEL {{ level }}: {{ level_data.title }}</h1>
+    <div style="color: #888; font-size: 0.9rem; margin-bottom: 25px;">{{ t.theory_title }}</div>
+
+    <div class="panel-header">THEORY</div>
+    <div class="split-layout{% if show_quiz and not error %} quiz-mode{% endif %}">
+      <div class="panel">
+        <div class="theory-box">
+          <strong style="color: var(--primary-cyan);">{{ t.auth_theory_p1 }}</strong>
+        </div>
+
+        <div class="theory-box">
+          <strong style="color: var(--warning-gold);">{{ t.auth_theory_p2 }}</strong>
+        </div>
+
+        <div class="theory-box">
+          <strong>{{ t.auth_theory_p3 }}</strong>
+        </div>
+
+        <div class="theory-box">
+          <strong>{{ t.auth_theory_p4 }}</strong>
+        </div>
+
+        {% if level == 1 %}
+        <div class="theory-box">
+          <strong>{{ t.auth_lvl1_ex }}</strong>
+        </div>
+        {% elif level == 2 %}
+        <div class="theory-box">
+          <strong>{{ t.auth_lvl2_ex }}</strong>
+        </div>
+        {% elif level == 3 %}
+        <div class="theory-box">
+          <strong>{{ t.auth_lvl3_ex }}</strong>
+        </div>
+        {% endif %}
+
+        <div class="theory-box">
+          <strong style="color: #00ff41;">{{ t.auth_theory_p5 }}</strong>
+          <p>{{ t.auth_theory_p6 }}</p>
+        </div>
+      </div>
+      <div class="panel quiz-box{% if not show_quiz and not error %} hidden{% endif %}">
+        <h3>{{ t.auth_theory_quiz_heading }}</h3>
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+        <form method="POST" action="{{ url_for('authbypass.verify_auth_theory') }}">
+          <input type="hidden" name="level_id" value="{{ level }}">
+          <div class="q-block">
+            <p>{{ t.auth_th_q1 }}</p>
+            <label><input type="radio" name="q1" value="corr" required> {{ t.auth_th_q1o1 }}</label>
+            <label><input type="radio" name="q1" value="w1"> {{ t.auth_th_q1o2 }}</label>
+            <label><input type="radio" name="q1" value="w2"> {{ t.auth_th_q1o3 }}</label>
+          </div>
+          <div class="q-block">
+            <p>{{ t.auth_th_q2 }}</p>
+            <label><input type="radio" name="q2" value="w1" required> {{ t.auth_th_q2o1 }}</label>
+            <label><input type="radio" name="q2" value="corr"> {{ t.auth_th_q2o2 }}</label>
+            <label><input type="radio" name="q2" value="w2"> {{ t.auth_th_q2o3 }}</label>
+          </div>
+          <div class="q-block">
+            <p>{{ t.auth_th_q3 }}</p>
+            <label><input type="radio" name="q3" value="w1" required> {{ t.auth_th_q3o1 }}</label>
+            <label><input type="radio" name="q3" value="corr"> {{ t.auth_th_q3o2 }}</label>
+            <label><input type="radio" name="q3" value="w2"> {{ t.auth_th_q3o3 }}</label>
+          </div>
+          <div class="q-block">
+            <p>{{ t.auth_th_q4 }}</p>
+            <label><input type="radio" name="q4" value="w1" required> {{ t.auth_th_q4o1 }}</label>
+            <label><input type="radio" name="q4" value="w2"> {{ t.auth_th_q4o2 }}</label>
+            <label><input type="radio" name="q4" value="corr"> {{ t.auth_th_q4o3 }}</label>
+          </div>
+          <div class="q-block">
+            <p>{{ t.auth_th_q5 }}</p>
+            <label><input type="radio" name="q5" value="corr" required> {{ t.auth_th_q5o1 }}</label>
+            <label><input type="radio" name="q5" value="w1"> {{ t.auth_th_q5o2 }}</label>
+            <label><input type="radio" name="q5" value="w2"> {{ t.auth_th_q5o3 }}</label>
+          </div>
+          <div class="q-block">
+            <p>{{ t.auth_th_q6 }}</p>
+            <label><input type="radio" name="q6" value="w1" required> {{ t.auth_th_q6o1 }}</label>
+            <label><input type="radio" name="q6" value="corr"> {{ t.auth_th_q6o2 }}</label>
+            <label><input type="radio" name="q6" value="w2"> {{ t.auth_th_q6o3 }}</label>
+          </div>
+          <button type="submit" class="btn-hack">{{ t.auth_theory_submit }}</button>
+        </form>
+      </div>
+    </div>
+    <div class="nav-row" style="display: flex; justify-content: flex-end;">
+      {% if show_quiz or error %}
+      <span style="color:#ff7b7b;">Complete and submit all quiz answers to continue.</span>
+      {% else %}
+      <a href="{{ url_for('authbypass.auth_theory', level_id=level) }}?quiz=1" class="proceed-btn">ПРОЙТИ К КВИЗУ →</a>
+      {% endif %}
+    </div>
+  </div>
+</body>
+
+</html>

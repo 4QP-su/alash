@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+
+<html lang="ru">
+
+
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <title>Mission Selection | SQL Lab</title>
+
+  <style>
+    :root {
+
+      --neon-green: #00ff41;
+
+      --soft-green: rgba(0, 255, 65, 0.15);
+
+      --bg-black: #050505;
+
+      --card-bg: #0a0a0a;
+
+      --border-dim: #004411;
+
+      --text-dim: #008f23;
+
+    }
+
+
+
+    body {
+
+      background-color: var(--bg-black);
+
+      color: var(--neon-green);
+
+      font-family: 'Courier New', monospace;
+
+      padding: 40px;
+
+      margin: 0;
+
+      /* Плавное появление всей страницы */
+
+      animation: fadeInPage 0.8s ease-out;
+
+    }
+
+
+
+    @keyframes fadeInPage {
+
+      from {
+
+        opacity: 0;
+
+        transform: translateY(10px);
+
+      }
+
+
+
+      to {
+
+        opacity: 1;
+
+        transform: translateY(0);
+
+      }
+
+    }
+
+
+
+    h1 {
+
+      text-align: center;
+
+      font-size: 1.8rem;
+
+      text-transform: uppercase;
+
+      letter-spacing: 6px;
+
+      margin-bottom: 50px;
+
+      border-bottom: 1px solid var(--border-dim);
+
+      padding-bottom: 20px;
+
+      transition: 0.5s;
+
+    }
+
+
+
+    .levels-grid {
+
+      display: grid;
+
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+
+      gap: 30px;
+
+      max-width: 1200px;
+
+      margin: 0 auto;
+
+    }
+
+
+
+    .level-card {
+
+      background: var(--card-bg);
+
+      border: 1px solid var(--border-dim);
+
+      padding: 30px;
+
+      text-decoration: none;
+
+      color: var(--neon-green);
+
+      border-radius: 12px;
+
+      /* Мягкие углы */
+
+      display: flex;
+
+      flex-direction: column;
+
+      /* Плавный переход для всех свойств */
+
+      transition: transform 0.4s cubic-bezier(0.165, 0.84, 0.44, 1),
+
+        box-shadow 0.4s ease,
+
+        border-color 0.4s ease;
+
+      position: relative;
+
+      overflow: hidden;
+
+    }
+
+
+
+    /* Эффект при наведении — карточка "всплывает" */
+
+    .level-card:hover {
+
+      transform: translateY(-8px);
+
+      border-color: var(--neon-green);
+
+      box-shadow: 0 10px 30px rgba(0, 255, 65, 0.1);
+
+    }
+
+
+
+    /* Мягкий градиент внутри при наведении */
+
+    .level-card::after {
+
+      content: '';
+
+      position: absolute;
+
+      top: 0;
+
+      left: 0;
+
+      width: 100%;
+
+      height: 100%;
+
+      background: linear-gradient(180deg, transparent 0%, var(--soft-green) 100%);
+
+      opacity: 0;
+
+      transition: 0.4s;
+
+    }
+
+
+
+    .level-card:hover::after {
+
+      opacity: 1;
+
+    }
+
+
+
+    .level-title {
+
+      font-size: 1.3rem;
+
+      font-weight: bold;
+
+      margin-bottom: 15px;
+
+      color: #fff;
+
+      z-index: 2;
+
+    }
+
+
+
+    .theory-preview {
+
+      font-size: 0.9rem;
+
+      color: var(--text-dim);
+
+      line-height: 1.5;
+
+      border-top: 1px solid #002200;
+
+      padding-top: 15px;
+
+      margin-bottom: 20px;
+
+      height: 60px;
+
+      overflow: hidden;
+
+      z-index: 2;
+
+    }
+
+
+
+    .status-box {
+
+      margin-top: auto;
+
+      display: flex;
+
+      justify-content: space-between;
+
+      align-items: center;
+
+      font-size: 0.7rem;
+
+      background: rgba(0, 0, 0, 0.5);
+
+      padding: 8px 12px;
+
+      border-radius: 6px;
+
+      border: 1px solid var(--border-dim);
+
+      z-index: 2;
+
+    }
+
+
+
+    .tag-active {
+
+      color: #000;
+
+      background: var(--neon-green);
+
+      padding: 2px 8px;
+
+      font-weight: bold;
+
+      border-radius: 4px;
+
+      box-shadow: 0 0 10px var(--soft-green);
+
+    }
+
+
+
+    /* Добавь это в конец блока <style> */
+
+    .back-link {
+
+      display: block;
+
+      width: fit-content;
+
+      margin: 60px auto;
+
+      /* Центрирует кнопку и дает отступ сверху */
+
+      padding: 12px 25px;
+
+      color: #444;
+
+      text-decoration: none;
+
+      text-transform: uppercase;
+
+      letter-spacing: 3px;
+
+      font-size: 0.8rem;
+
+      border: 1px solid transparent;
+
+      border-radius: 8px;
+
+      transition: all 0.4s ease;
+
+    }
+
+
+
+    .back-link:hover {
+
+      color: var(--neon-green);
+
+      border-color: var(--neon-green);
+
+      background: rgba(0, 255, 65, 0.05);
+
+      box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+
+      transform: translateY(-3px);
+
+    }
+
+
+
+    .technique-tags {
+
+      display: flex;
+
+      gap: 10px;
+
+      justify-content: center;
+
+      margin-bottom: 30px;
+
+    }
+
+
+
+    .tag {
+
+      padding: 4px 12px;
+
+      border-radius: 4px;
+
+      font-size: 0.75rem;
+
+      font-weight: bold;
+
+      text-transform: uppercase;
+
+      border: 1px solid;
+
+    }
+
+
+
+    .tag-green {
+
+      color: #00ff41;
+
+      border-color: #00ff41;
+
+      background: rgba(0, 255, 65, 0.1);
+
+    }
+
+
+
+    .tag-cyan {
+
+      color: #00e5ff;
+
+      border-color: #00e5ff;
+
+      background: rgba(0, 229, 255, 0.1);
+
+    }
+
+
+
+    .tag-gold {
+
+      color: #ffd700;
+
+      border-color: #ffd700;
+
+      background: rgba(255, 215, 0, 0.1);
+
+    }
+
+
+
+    .tag-red {
+
+      color: #ff3e3e;
+
+      border-color: #ff3e3e;
+
+      background: rgba(255, 62, 62, 0.1);
+
+    }
+  </style>
+
+</head>
+
+
+
+<body>
+
+
+
+  <h1>[!] SQL_TARGET_INFRASTRUCTURE</h1>
+
+  <div class="technique-tags" style="display: flex; gap: 10px; justify-content: center; margin-bottom: 30px;">
+
+    <span class="tag tag-green"
+      style="color: #00ff41; border: 1px solid #00ff41; padding: 4px 12px; border-radius: 4px; background: rgba(0,255,65,0.1);">Classic
+
+      SQLi</span>
+
+    <span class="tag tag-cyan"
+      style="color: #00e5ff; border: 1px solid #00e5ff; padding: 4px 12px; border-radius: 4px; background: rgba(0,229,255,0.1);">Blind
+
+      SQLi</span>
+
+    <span class="tag tag-gold"
+      style="color: #ffd700; border: 1px solid #ffd700; padding: 4px 12px; border-radius: 4px; background: rgba(255,215,0,0.1);">Union
+
+      Based</span>
+
+    <span class="tag tag-red"
+      style="color: #ff3e3e; border: 1px solid #ff3e3e; padding: 4px 12px; border-radius: 4px; background: rgba(255,62,62,0.1);">Error
+
+      Based</span>
+
+  </div>
+
+
+
+  {% set done_count = levels | selectattr('completed') | list | length %}
+
+  <div class="progress-wrap" style="width: 400px; margin: 0 auto 40px auto;">
+
+    <div class="progress-label" style="font-size: 0.7rem; color: #555; margin-bottom: 5px; text-align: left;">
+
+      SQL_INJECTION_PROGRESS</div>
+
+    <div class="progress-bar-track" style="background: #111; height: 10px; border-radius: 5px; border: 1px solid #222;">
+
+      <div class="progress-bar-fill"
+        style="width: {{ (done_count / levels|length * 100) | int }}%; background: #00ff41; height: 100%; border-radius: 5px; box-shadow: 0 0 10px #00ff41;">
+
+      </div>
+
+    </div>
+
+    <div class="progress-count" style="font-size: 0.8rem; text-align: right; margin-top: 5px; color: #00ff41;">{{
+
+      done_count }}/{{ levels|length }} NODES</div>
+
+  </div>
+
+
+
+  <div class="levels-grid">
+
+    {% for level in levels %}
+
+    <a class="level-card" href="{{ url_for('sql.sql_level', level_id=level.id) }}">
+
+      <div class="level-id">PATH: root/targets/level_0{{ level.id }}</div>
+
+      <div class="level-title">> {{ level.title }}</div>
+
+      <div class="theory-preview">
+
+        DATA_INTEL: {{ level.theory[:115] }}...
+
+      </div>
+
+
+
+      <div class="status-box">
+
+        <span>INTEL: ACQUIRED</span>
+
+        <span class="tag-active">READY_TO_INJECT</span>
+
+      </div>
+
+    </a>
+
+    {% endfor %}
+
+  </div>
+
+
+
+  <a href="/dashboard" class="back-link">ABORT_MISSION_AND_RETURN_TO_BASE</a>
+
+  <!-- Voice Assistant for SQL Levels Hub -->
+  <div style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+    <button onclick="toggleVoiceChat()" style="
+   width: 60px;
+   height: 60px;
+   border-radius: 50%;
+   border: 2px solid var(--neon-green);
+   background: var(--bg-black);
+   color: var(--neon-green);
+   font-size: 24px;
+   cursor: pointer;
+   box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+   transition: all 0.3s ease;
+  " title="SQL Assistant">
+      <span id="voiceBtnIcon">mic</span>
+    </button>
+
+    <div id="voiceChatBox" style="
+   display: none;
+   position: absolute;
+   bottom: 80px;
+   right: 0;
+   width: 380px;
+   height: 450px;
+   background: var(--card-bg);
+   border: 1px solid var(--neon-green);
+   border-radius: 10px;
+   padding: 15px;
+   overflow-y: auto;
+  ">
+      <div style="color: var(--neon-green); font-weight: bold; margin-bottom: 10px;">SQL_HUB_ASSISTANT</div>
+      <div id="voiceMessages"
+        style="color: var(--neon-green); font-family: monospace; font-size: 12px; height: 320px; overflow-y: auto; margin-bottom: 10px;">
+        System: I'm your SQL hub assistant. Ask about techniques or quiz help!
+      </div>
+      <div style="margin-top: 15px;">
+        <button onclick="startRecording()" id="recordBtn" style="
+     background: var(--neon-green);
+     color: var(--bg-black);
+     border: none;
+     padding: 8px 15px;
+     margin-right: 10px;
+     cursor: pointer;
+     font-family: monospace;
+    ">Record</button>
+        <button onclick="clearChat()" style="
+     background: #666;
+     color: white;
+     border: none;
+     padding: 8px 15px;
+     cursor: pointer;
+     font-family: monospace;
+    ">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Quiz functionality
+    const quizData = [
+      {
+        question: "What is the most common SQL injection technique?",
+        options: ["Cross-Site Scripting", "SQL Injection via quotes", "Directory Traversal", "Buffer Overflow"],
+        correct: 1,
+        explanation: "SQL injection via quotes is the most common technique where attackers break SQL queries with quote characters."
+      },
+      {
+        question: "What does the ' OR 1=1 -- payload do?",
+        options: ["Creates a table", "Always returns true", "Deletes data", "Backups database"],
+        correct: 1,
+        explanation: "' OR 1=1 -- creates a condition that is always true, bypassing authentication."
+      },
+      {
+        question: "What is Union-based SQL injection?",
+        options: ["Combines multiple queries", "Joins databases", "Creates unions", "Merges tables"],
+        correct: 0,
+        explanation: "Union-based injection combines the results of multiple SELECT statements into one result."
+      }
+    ];
+
+    let currentQuizIndex = 0;
+    let quizScore = 0;
+
+    function checkAnswer(selectedIndex) {
+      const currentQuiz = quizData[currentQuizIndex];
+      const options = document.querySelectorAll('.quiz-option');
+      const feedback = document.getElementById('quiz-feedback');
+      const nextBtn = document.getElementById('next-btn');
+
+      // Disable all options
+      options.forEach(option => option.style.pointerEvents = 'none');
+
+      if (selectedIndex === currentQuiz.correct) {
+        options[selectedIndex].style.background = 'rgba(0, 255, 65, 0.3)';
+        options[selectedIndex].style.borderColor = '#00ff41';
+        feedback.innerHTML = `<span style="color: #00ff41;">CORRECT!</span> ${currentQuiz.explanation}`;
+        quizScore++;
+      } else {
+        options[selectedIndex].style.background = 'rgba(255, 62, 62, 0.3)';
+        options[selectedIndex].style.borderColor = '#ff3e3e';
+        options[currentQuiz.correct].style.background = 'rgba(0, 255, 65, 0.3)';
+        options[currentQuiz.correct].style.borderColor = '#00ff41';
+        feedback.innerHTML = `<span style="color: #ff3e3e;">INCORRECT!</span> ${currentQuiz.explanation}`;
+      }
+
+      nextBtn.style.display = 'inline-block';
+    }
+
+    function nextQuestion() {
+      currentQuizIndex++;
+
+      if (currentQuizIndex >= quizData.length) {
+        showQuizResults();
+        return;
+      }
+
+      const currentQuiz = quizData[currentQuizIndex];
+      const questionEl = document.getElementById('quiz-question');
+      const optionsEl = document.getElementById('quiz-options');
+      const feedbackEl = document.getElementById('quiz-feedback');
+      const nextBtn = document.getElementById('next-btn');
+
+      questionEl.textContent = currentQuiz.question;
+
+      optionsEl.innerHTML = currentQuiz.options.map((option, index) => `
+    <button onclick="checkAnswer(${index})" class="quiz-option" style="
+     background: rgba(0, 255, 65, 0.1);
+     border: 1px solid var(--neon-green);
+     color: var(--neon-green);
+     padding: 12px;
+     border-radius: 5px;
+     cursor: pointer;
+     font-family: 'Courier New', monospace;
+     transition: all 0.3s ease;
+    ">${String.fromCharCode(65 + index)}) ${option}</button>
+   `).join('');
+
+      feedbackEl.textContent = '';
+      nextBtn.style.display = 'none';
+    }
+
+    function showQuizResults() {
+      const container = document.getElementById('quiz-container');
+      const percentage = Math.round((quizScore / quizData.length) * 100);
+
+      container.innerHTML = `
+    <h3 style="color: var(--neon-green); text-align: center; margin-bottom: 20px;">> QUIZ_COMPLETE</h3>
+    <div style="text-align: center; margin-bottom: 20px;">
+     <div style="font-size: 2rem; color: var(--neon-green); margin-bottom: 10px;">${quizScore}/${quizData.length}</div>
+     <div style="color: var(--text-dim); font-size: 1.1rem;">Score: ${percentage}%</div>
+    </div>
+    <div style="text-align: center; color: var(--text-dim); margin-bottom: 20px;">
+     ${percentage >= 70 ?
+          '<span style="color: var(--neon-green);">Excellent! Ready for SQL missions!</span>' :
+          '<span style="color: #ffd700;">Good! Review SQL basics before starting.</span>'
+        }
+    </div>
+    <div style="text-align: center;">
+     <button onclick="restartQuiz()" style="
+      background: var(--neon-green);
+      color: var(--bg-black);
+      border: none;
+      padding: 10px 20px;
+      border-radius: 5px;
+      cursor: pointer;
+      font-family: 'Courier New', monospace;
+     ">Restart Quiz</button>
+    </div>
+   `;
+    }
+
+    function restartQuiz() {
+      currentQuizIndex = 0;
+      quizScore = 0;
+      location.reload();
+    }
+
+    // Voice Assistant functionality
+    let mediaRecorder;
+    let audioChunks = [];
+    let isRecording = false;
+
+    function toggleVoiceChat() {
+      const chatBox = document.getElementById('voiceChatBox');
+      const icon = document.getElementById('voiceBtnIcon');
+
+      if (chatBox.style.display === 'none') {
+        chatBox.style.display = 'block';
+        icon.textContent = 'close';
+      } else {
+        chatBox.style.display = 'none';
+        icon.textContent = 'mic';
+        if (isRecording) {
+          stopRecording();
+        }
+      }
+    }
+
+    async function startRecording() {
+      if (isRecording) {
+        stopRecording();
+        return;
+      }
+
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        mediaRecorder = new MediaRecorder(stream);
+        audioChunks = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          audioChunks.push(event.data);
+        };
+
+        mediaRecorder.onstop = async () => {
+          const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+          await sendAudioToServer(audioBlob);
+        };
+
+        mediaRecorder.start();
+        isRecording = true;
+
+        document.getElementById('recordBtn').textContent = 'Stop';
+        document.getElementById('recordBtn').style.background = '#ff3e3e';
+        addMessage('System: Recording your question...');
+
+      } catch (error) {
+        addMessage('System: Error - ' + error.message);
+        console.error('Microphone error:', error);
+      }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && isRecording) {
+        mediaRecorder.stop();
+        mediaRecorder.stream.getTracks().forEach(track => track.stop());
+        isRecording = false;
+
+        document.getElementById('recordBtn').textContent = 'Record';
+        document.getElementById('recordBtn').style.background = 'var(--neon-green)';
+        addMessage('System: Processing your question...');
+      }
+    }
+
+    async function sendAudioToServer(audioBlob) {
+      const formData = new FormData();
+      formData.append('audio', audioBlob, 'recording.webm');
+
+      try {
+        const response = await fetch('/gemini/chat', {
+          method: 'POST',
+          body: formData
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          addMessage('You: ' + (data.transcription || 'Question recorded'));
+          addMessage('Assistant: ' + data.response);
+        } else {
+          addMessage('System: Error - ' + (data.error || 'Processing failed'));
+        }
+      } catch (error) {
+        addMessage('System: Connection error - ' + error.message);
+        console.error('Server error:', error);
+      }
+    }
+
+    function addMessage(text) {
+      const messages = document.getElementById('voiceMessages');
+      const messageDiv = document.createElement('div');
+      messageDiv.style.cssText = 'margin-bottom: 8px; padding: 5px; border-left: 2px solid var(--neon-green); padding-left: 8px;';
+      messageDiv.textContent = text;
+      messages.appendChild(messageDiv);
+      messages.scrollTop = messages.scrollHeight;
+    }
+
+    function clearChat() {
+      document.getElementById('voiceMessages').innerHTML = 'System: Chat cleared. Ready for new questions!<br>';
+    }
+
+    // Test API health on load
+    window.addEventListener('load', async function () {
+      try {
+        const response = await fetch('/gemini/health');
+        const data = await response.json();
+
+        if (data.api_configured) {
+          addMessage('System: SQL Hub Assistant ready.');
+        } else {
+          addMessage('System: Assistant not available.');
+        }
+      } catch (error) {
+        addMessage('System: Failed to connect to assistant.');
+      }
+    });
+  </script>
+
+</body>
+
+</html>

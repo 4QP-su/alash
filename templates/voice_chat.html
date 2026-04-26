@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Chat - Gemini AI</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .chat-container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 600px;
+            height: 80vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .chat-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .message {
+            padding: 12px 16px;
+            border-radius: 18px;
+            max-width: 80%;
+            word-wrap: break-word;
+            animation: fadeIn 0.3s ease-in;
+        }
+        
+        .message.user {
+            background: #007bff;
+            color: white;
+            align-self: flex-end;
+            margin-left: auto;
+        }
+        
+        .message.bot {
+            background: #f1f3f4;
+            color: #333;
+            align-self: flex-start;
+        }
+        
+        .message.transcription {
+            background: #e8f5e8;
+            color: #2e7d32;
+            font-style: italic;
+            font-size: 0.9em;
+            align-self: flex-start;
+        }
+        
+        .chat-controls {
+            padding: 20px;
+            border-top: 1px solid #eee;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: #f8f9fa;
+        }
+        
+        .mic-button {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: none;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .mic-button:hover {
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .mic-button.recording {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+            animation: pulse 1.5s infinite;
+        }
+        
+        .mic-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .status-text {
+            flex: 1;
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .clear-button {
+            padding: 10px 20px;
+            border: none;
+            background: #6c757d;
+            color: white;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s ease;
+        }
+        
+        .clear-button:hover {
+            background: #5a6268;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0.7); }
+            70% { box-shadow: 0 0 0 10px rgba(255, 107, 107, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(255, 107, 107, 0); }
+        }
+        
+        .error-message {
+            background: #ffebee;
+            color: #c62828;
+            padding: 12px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #c62828;
+        }
+        
+        .loading-indicator {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading-indicator.active {
+            display: block;
+        }
+        
+        .loading-dots {
+            display: inline-block;
+        }
+        
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+        
+        @keyframes dots {
+            0%, 20% { content: ''; }
+            40% { content: '.'; }
+            60% { content: '..'; }
+            80%, 100% { content: '...'; }
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            Voice Chat - Gemini AI Assistant
+        </div>
+        
+        <div class="chat-messages" id="chatMessages">
+            <div class="message bot">
+                Hello! I'm your voice assistant. Click the microphone button to start recording your message.
+            </div>
+        </div>
+        
+        <div class="loading-indicator" id="loadingIndicator">
+            <div class="loading-dots">Processing</div>
+        </div>
+        
+        <div class="chat-controls">
+            <button class="mic-button" id="micButton" title="Click to record">
+                <span id="micIcon">mic</span>
+            </button>
+            
+            <div class="status-text" id="statusText">
+                Ready to record
+            </div>
+            
+            <button class="clear-button" id="clearButton">
+                Clear Chat
+            </button>
+        </div>
+    </div>
+
+    <script>
+        class VoiceChat {
+            constructor() {
+                this.mediaRecorder = null;
+                this.audioChunks = [];
+                this.isRecording = false;
+                
+                this.initElements();
+                this.bindEvents();
+                this.checkAPIHealth();
+            }
+            
+            initElements() {
+                this.micButton = document.getElementById('micButton');
+                this.micIcon = document.getElementById('micIcon');
+                this.chatMessages = document.getElementById('chatMessages');
+                this.statusText = document.getElementById('statusText');
+                this.clearButton = document.getElementById('clearButton');
+                this.loadingIndicator = document.getElementById('loadingIndicator');
+            }
+            
+            bindEvents() {
+                this.micButton.addEventListener('click', () => this.toggleRecording());
+                this.clearButton.addEventListener('click', () => this.clearChat());
+            }
+            
+            async checkAPIHealth() {
+                try {
+                    const response = await fetch('/gemini/health');
+                    const data = await response.json();
+                    
+                    if (!data.api_configured) {
+                        this.showError('Gemini API not configured. Please check your API key.');
+                        this.micButton.disabled = true;
+                    }
+                } catch (error) {
+                    this.showError('Failed to connect to the server. Please try again later.');
+                    this.micButton.disabled = true;
+                }
+            }
+            
+            async toggleRecording() {
+                if (this.isRecording) {
+                    this.stopRecording();
+                } else {
+                    await this.startRecording();
+                }
+            }
+            
+            async startRecording() {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ 
+                        audio: {
+                            echoCancellation: true,
+                            noiseSuppression: true,
+                            sampleRate: 44100
+                        } 
+                    });
+                    
+                    this.mediaRecorder = new MediaRecorder(stream, {
+                        mimeType: 'audio/webm;codecs=opus'
+                    });
+                    
+                    this.audioChunks = [];
+                    
+                    this.mediaRecorder.ondataavailable = (event) => {
+                        this.audioChunks.push(event.data);
+                    };
+                    
+                    this.mediaRecorder.onstop = () => this.handleRecordingComplete();
+                    
+                    this.mediaRecorder.start();
+                    this.isRecording = true;
+                    
+                    this.micButton.classList.add('recording');
+                    this.micIcon.textContent = 'stop';
+                    this.statusText.textContent = 'Recording... Click to stop';
+                    
+                } catch (error) {
+                    this.showError('Failed to access microphone. Please check permissions.');
+                    console.error('Microphone access error:', error);
+                }
+            }
+            
+            stopRecording() {
+                if (this.mediaRecorder && this.isRecording) {
+                    this.mediaRecorder.stop();
+                    this.mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                    
+                    this.isRecording = false;
+                    this.micButton.classList.remove('recording');
+                    this.micIcon.textContent = 'mic';
+                    this.statusText.textContent = 'Processing...';
+                    
+                    this.showLoading(true);
+                }
+            }
+            
+            async handleRecordingComplete() {
+                const audioBlob = new Blob(this.audioChunks, { type: 'audio/webm' });
+                await this.sendAudioToServer(audioBlob);
+            }
+            
+            async sendAudioToServer(audioBlob) {
+                const formData = new FormData();
+                formData.append('audio', audioBlob, 'recording.webm');
+                
+                try {
+                    const response = await fetch('/gemini/chat', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (response.ok) {
+                        this.displayTranscription(data.transcription);
+                        this.displayBotResponse(data.response);
+                        this.statusText.textContent = 'Ready to record';
+                    } else {
+                        this.showError(data.error || 'Failed to process audio');
+                        this.statusText.textContent = 'Error occurred';
+                    }
+                } catch (error) {
+                    this.showError('Failed to connect to server. Please try again.');
+                    console.error('Server error:', error);
+                    this.statusText.textContent = 'Connection error';
+                } finally {
+                    this.showLoading(false);
+                }
+            }
+            
+            displayTranscription(transcription) {
+                if (transcription && transcription !== 'Audio processed') {
+                    this.addMessage(transcription, 'transcription');
+                }
+            }
+            
+            displayBotResponse(response) {
+                this.addMessage(response, 'bot');
+            }
+            
+            addMessage(text, type) {
+                const messageDiv = document.createElement('div');
+                messageDiv.className = `message ${type}`;
+                messageDiv.textContent = text;
+                
+                this.chatMessages.appendChild(messageDiv);
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+            }
+            
+            showError(message) {
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'error-message';
+                errorDiv.textContent = message;
+                
+                this.chatMessages.appendChild(errorDiv);
+                this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+                
+                setTimeout(() => {
+                    errorDiv.remove();
+                }, 5000);
+            }
+            
+            showLoading(show) {
+                if (show) {
+                    this.loadingIndicator.classList.add('active');
+                } else {
+                    this.loadingIndicator.classList.remove('active');
+                }
+            }
+            
+            async clearChat() {
+                try {
+                    await fetch('/gemini/chat/clear', { method: 'POST' });
+                    
+                    this.chatMessages.innerHTML = `
+                        <div class="message bot">
+                            Chat cleared. How can I help you?
+                        </div>
+                    `;
+                    
+                    this.statusText.textContent = 'Ready to record';
+                } catch (error) {
+                    this.showError('Failed to clear chat history');
+                    console.error('Clear chat error:', error);
+                }
+            }
+        }
+        
+        // Initialize voice chat when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            new VoiceChat();
+        });
+    </script>
+</body>
+</html>

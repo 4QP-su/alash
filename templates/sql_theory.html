@@ -1,0 +1,571 @@
+﻿<!DOCTYPE html>
+
+<html lang="{{ curr_lang }}">
+
+
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>{{ t.sql_theory_html_title }}</title>
+
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        body {
+
+            background: radial-gradient(circle at top, rgba(0, 255, 65, 0.08), #050505 45%);
+
+            color: #c8ffd0;
+
+            font-family: 'Courier New', monospace;
+
+            padding: 40px;
+
+            line-height: 1.6;
+
+            min-height: 100vh;
+
+        }
+
+
+
+        .theory-container {
+
+            max-width: 960px;
+
+            margin: 0 auto;
+
+            border: 1px solid rgba(0, 255, 65, 0.12);
+
+            padding: 28px;
+
+            background: rgba(3, 3, 3, 0.96);
+
+            box-shadow: 0 0 50px rgba(0, 255, 65, 0.08);
+
+            border-radius: 18px;
+
+        }
+
+
+
+        .theory-container h1 {
+
+            color: #fff;
+
+            font-size: 1.2rem;
+
+            letter-spacing: 3px;
+
+            margin-top: 0;
+
+        }
+
+
+
+        .panel-header {
+
+            margin: 18px 0 20px;
+
+            color: #a4f8a2;
+
+            text-transform: uppercase;
+
+            letter-spacing: 0.22em;
+
+            font-size: 0.78rem;
+
+        }
+
+
+
+        .split-layout {
+
+            display: grid;
+
+            grid-template-columns: 1fr;
+
+            gap: 24px;
+
+            margin-bottom: 24px;
+
+        }
+
+
+
+        .split-layout .quiz-box.hidden {
+
+            display: none !important;
+
+        }
+
+
+
+        .split-layout.quiz-mode .panel:first-child {
+
+            display: none !important;
+
+        }
+
+
+
+        @media (max-width: 860px) {
+
+            .split-layout {
+
+                grid-template-columns: 1fr;
+
+            }
+
+        }
+
+
+
+        .panel {
+
+            background: rgba(0, 0, 0, 0.72);
+
+            border: 1px solid rgba(0, 255, 65, 0.18);
+
+            border-radius: 16px;
+
+            padding: 24px;
+
+            box-shadow: inset 0 0 24px rgba(0, 255, 65, 0.04);
+
+        }
+
+
+
+        .theory-container section p {
+
+            margin: 0.85em 0;
+
+            color: #b0f5c0;
+
+        }
+
+
+
+        .theory-container code {
+
+            color: #ffd700;
+
+            background: #111;
+
+            padding: 2px 6px;
+
+            border-radius: 4px;
+
+        }
+
+
+
+        .code-sample {
+
+            margin: 16px 0;
+
+            padding: 14px;
+
+            background: rgba(0, 0, 0, 0.7);
+
+            border-left: 3px solid #00ff41;
+
+            font-size: 0.85rem;
+
+            color: #c8ffd0;
+
+        }
+
+
+
+        .code-sample .hi {
+
+            color: #fff;
+
+        }
+
+
+
+        .quiz-box {
+
+            margin: 0;
+
+            border: none;
+
+            padding: 0;
+
+        }
+
+
+
+        .quiz-box.hidden {
+
+            display: none;
+
+        }
+
+
+
+        .quiz-box h3 {
+
+            color: #00ff41;
+
+            font-size: 1rem;
+
+            margin-top: 0;
+
+        }
+
+
+
+        .q-block {
+
+            margin: 20px 0;
+
+            padding: 18px;
+
+            background: rgba(0, 255, 65, 0.06);
+
+            border-radius: 12px;
+
+            border: 1px solid rgba(0, 255, 65, 0.14);
+
+        }
+
+
+
+        .q-block .q-num {
+
+            color: #99aa99;
+
+            font-size: 0.78rem;
+
+            margin: 0 0 12px 0;
+
+        }
+
+
+
+        .q-block p {
+
+            margin: 0 0 12px 0;
+
+            color: #e0ffe8;
+
+        }
+
+
+
+        .q-block label {
+
+            display: block;
+
+            margin: 8px 0;
+
+            cursor: pointer;
+
+            color: #ccd8bf;
+
+        }
+
+
+
+        .q-block input {
+
+            margin-right: 10px;
+
+            vertical-align: middle;
+
+        }
+
+
+
+        .btn-hack {
+
+            margin-top: 20px;
+
+            background: #00ff41;
+
+            color: #000;
+
+            border: none;
+
+            padding: 10px 20px;
+
+            cursor: pointer;
+
+            font-family: inherit;
+
+            font-weight: bold;
+
+            border-radius: 6px;
+
+            transition: 0.3s;
+
+        }
+
+
+
+        .btn-hack:hover {
+
+            background: #00dd00;
+
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+
+
+
+            .q-block input {
+
+                margin-right: 10px;
+
+                vertical-align: middle;
+
+            }
+
+
+
+
+            margin-top: 28px;
+
+            font-size: 0.75rem;
+
+        }
+
+
+
+        .nav-row a {
+
+            color: #94c78b;
+
+            text-decoration: none;
+
+        }
+
+
+
+        .nav-row a:hover {
+
+            color: #00ff41;
+
+        }
+
+
+
+        .proceed-btn {
+
+            display: inline-block;
+
+            padding: 10px 20px;
+
+            background: #00ff41;
+
+            color: #000;
+
+            text-decoration: none;
+
+            border-radius: 6px;
+
+            font-weight: bold;
+
+            transition: 0.3s;
+
+            border: none;
+
+            cursor: pointer;
+
+            font-family: inherit;
+
+        }
+
+
+
+        .proceed-btn:hover {
+
+            background: #00dd00;
+
+            box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+
+        }
+    </style>
+
+</head>
+
+
+
+<body>
+
+    <div class="theory-container">
+
+        <h1>{{ t.sql_theory_h1 }}</h1>
+
+        <div class="panel-header">THEORY</div>
+
+        <div class="split-layout{% if show_quiz and not error %} quiz-mode{% endif %}">
+
+            <div class="panel">
+
+                <section>
+
+                    <p>{{ t.sql_theory_p1 }}</p>
+
+                    <p>{{ t.sql_theory_p2 }}</p>
+
+                    <div class="code-sample">
+
+                        <span>SELECT * FROM users WHERE login = '</span><span
+                            class="hi">$user_input</span><span>';</span>
+
+                    </div>
+
+                    <p>{{ t.sql_theory_p3 }}</p>
+
+                    <p style="color:#99ff99;font-size:0.85rem;">e.g. <code>' OR '1'='1' --</code></p>
+
+                    <p>{{ t.sql_theory_p4 }}</p>
+
+                    <p>{{ t.sql_theory_p5 }}</p>
+
+                    <p>{{ t.sql_theory_p6 }}</p>
+
+                    <p>{{ t.sql_theory_p7 }}</p>
+
+                    <p>{{ t.sql_theory_p8 }}</p>
+
+                </section>
+
+            </div>
+
+            <div class="panel quiz-box{% if not show_quiz and not error %} hidden{% endif %}">
+
+                <h3>{{ t.sql_theory_quiz_heading }}</h3>
+
+                {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+
+
+                <form method="POST" action="{{ url_for('sql.verify_sql_theory') }}">
+
+                    <div class="q-block">
+
+                        <p class="q-num">SQL_QUIZ</p>
+
+                        <p>{{ t.sql_th_q1 }}</p>
+
+                        <label><input type="radio" name="q1" value="w1" required> {{ t.sql_th_q1o1 }}</label>
+
+                        <label><input type="radio" name="q1" value="corr"> {{ t.sql_th_q1o2 }}</label>
+
+                        <label><input type="radio" name="q1" value="w2"> {{ t.sql_th_q1o3 }}</label>
+
+                    </div>
+
+
+
+                    <div class="q-block">
+
+                        <p>{{ t.sql_th_q2 }}</p>
+
+                        <label><input type="radio" name="q2" value="w1" required> {{ t.sql_th_q2o1 }}</label>
+
+                        <label><input type="radio" name="q2" value="corr"> {{ t.sql_th_q2o2 }}</label>
+
+                        <label><input type="radio" name="q2" value="w2"> {{ t.sql_th_q2o3 }}</label>
+
+                    </div>
+
+
+
+                    <div class="q-block">
+
+                        <p>{{ t.sql_th_q3 }}</p>
+
+                        <label><input type="radio" name="q3" value="corr" required> {{ t.sql_th_q3o1 }}</label>
+
+                        <label><input type="radio" name="q3" value="w1"> {{ t.sql_th_q3o2 }}</label>
+
+                        <label><input type="radio" name="q3" value="w2"> {{ t.sql_th_q3o3 }}</label>
+
+                    </div>
+
+
+
+                    <div class="q-block">
+
+                        <p>{{ t.sql_th_q4 }}</p>
+
+                        <label><input type="radio" name="q4" value="w1" required> {{ t.sql_th_q4o1 }}</label>
+
+                        <label><input type="radio" name="q4" value="w2"> {{ t.sql_th_q4o2 }}</label>
+
+                        <label><input type="radio" name="q4" value="corr"> {{ t.sql_th_q4o3 }}</label>
+
+                    </div>
+
+
+
+                    <div class="q-block">
+
+                        <p>{{ t.sql_th_q5 }}</p>
+
+                        <label><input type="radio" name="q5" value="w1" required> {{ t.sql_th_q5o1 }}</label>
+
+                        <label><input type="radio" name="q5" value="w2"> {{ t.sql_th_q5o2 }}</label>
+
+                        <label><input type="radio" name="q5" value="corr"> {{ t.sql_th_q5o3 }}</label>
+
+                    </div>
+
+
+
+                    <div class="q-block">
+
+                        <p>{{ t.sql_th_q6 }}</p>
+
+                        <label><input type="radio" name="q6" value="corr" required> {{ t.sql_th_q6o1 }}</label>
+
+                        <label><input type="radio" name="q6" value="w1"> {{ t.sql_th_q6o2 }}</label>
+
+                        <label><input type="radio" name="q6" value="w2"> {{ t.sql_th_q6o3 }}</label>
+
+                    </div>
+
+
+
+                    <button type="submit" class="btn-hack">{{ t.sql_theory_submit }}</button>
+
+                </form>
+
+            </div>
+
+
+
+        </div>
+
+
+
+        <div class="nav-row" style="display: flex; justify-content: space-between; gap: 20px;">
+
+            {% if show_quiz or error %}
+
+            <span style="color:#ff7b7b;">Complete and submit all quiz answers to continue.</span>
+
+            {% else %}
+
+            <a href="{{ url_for('main.index') }}">[&lt;&lt; DASHBOARD]</a>
+
+            <a href="{{ url_for('sql.sql_theory') }}?quiz=1" class="proceed-btn">ПРОЙТИ К КВИЗУ →</a>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+</body>
+
+
+
+</html>

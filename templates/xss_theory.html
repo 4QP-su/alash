@@ -1,0 +1,585 @@
+﻿<!DOCTYPE html>
+
+<html lang="{{ curr_lang }}">
+
+
+
+<head>
+
+  <meta charset="UTF-8">
+
+  <title>{{ t.xss_theory_html_title }}</title>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <style>
+    body {
+
+      background: radial-gradient(circle at top, rgba(0, 229, 255, 0.08), #050505 45%);
+
+      color: #d0f5ff;
+
+      font-family: 'Courier New', monospace;
+
+      padding: 40px;
+
+      line-height: 1.6;
+
+      min-height: 100vh;
+
+    }
+
+
+
+    .theory-container {
+
+      max-width: 960px;
+
+      margin: 0 auto;
+
+      border: 1px solid rgba(255, 215, 0, 0.12);
+
+      padding: 30px;
+
+      background: rgba(5, 5, 5, 0.96);
+
+      box-shadow: 0 0 40px rgba(255, 215, 0, 0.08);
+
+      border-radius: 18px;
+
+    }
+
+
+
+    .theory-container h1 {
+
+      color: #ffd700;
+
+      letter-spacing: 2px;
+
+      font-size: 1.1rem;
+
+      margin-top: 0;
+
+    }
+
+
+
+    .panel-header {
+
+      margin: 18px 0 22px;
+
+      color: #c2e8ff;
+
+      text-transform: uppercase;
+
+      letter-spacing: 0.2em;
+
+      font-size: 0.82rem;
+
+    }
+
+
+
+    .split-layout {
+
+      display: grid;
+
+      grid-template-columns: 1fr;
+
+      gap: 24px;
+
+      margin-bottom: 24px;
+
+    }
+
+
+
+    .split-layout .quiz-box.hidden {
+
+      display: none !important;
+
+    }
+
+
+
+    .split-layout.quiz-mode .panel:first-child {
+
+      display: none !important;
+
+    }
+
+
+
+    @media (max-width: 860px) {
+
+      .split-layout {
+
+        grid-template-columns: 1fr;
+
+      }
+
+    }
+
+
+
+    .panel {
+
+      background: rgba(0, 0, 0, 0.72);
+
+      border: 1px solid rgba(255, 215, 0, 0.18);
+
+      border-radius: 16px;
+
+      padding: 24px;
+
+      box-shadow: inset 0 0 22px rgba(255, 215, 0, 0.04);
+
+    }
+
+
+
+    .theory-container section p {
+
+      margin: 0.85em 0;
+
+      color: #b8e8ff;
+
+    }
+
+
+
+    .theory-container code {
+
+      color: #ffd700;
+
+      background: #111;
+
+      padding: 2px 6px;
+
+      border-radius: 4px;
+
+    }
+
+
+
+    .quiz-box {
+
+      margin: 0;
+
+      border: none;
+
+      padding: 0;
+
+    }
+
+
+
+    .quiz-box.hidden {
+
+      display: none;
+
+    }
+
+
+
+    .quiz-box h3 {
+
+      color: #ffd700;
+
+      font-size: 1rem;
+
+    }
+
+
+
+    .q-block {
+
+      margin: 20px 0;
+
+      padding: 18px;
+
+      background: rgba(255, 215, 0, 0.08);
+
+      border-radius: 12px;
+
+      border: 1px solid rgba(255, 215, 0, 0.18);
+
+    }
+
+
+
+    .q-block .q-num {
+
+      color: #d0c36a;
+
+      font-size: 0.78rem;
+
+      margin-bottom: 10px;
+
+    }
+
+
+
+    .q-block p {
+
+      margin: 0 0 10px 0;
+
+      color: #edf3ff;
+
+    }
+
+
+
+    .q-block label {
+
+      display: block;
+
+      margin: 8px 0;
+
+      cursor: pointer;
+
+      color: #dcdfff;
+
+    }
+
+
+
+    .btn-hack {
+
+      margin-top: 20px;
+
+      background: #ffd700;
+
+      color: #000;
+
+      border: none;
+
+      padding: 10px 20px;
+
+      cursor: pointer;
+
+      font-family: inherit;
+
+      font-weight: bold;
+
+      border-radius: 6px;
+
+      transition: 0.3s;
+
+    }
+
+
+
+    .btn-hack:hover {
+
+      background: #ffec00;
+
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+
+    }
+
+
+
+    .error {
+
+      color: #ff7b7b;
+
+      white-space: pre-line;
+
+    }
+
+
+
+    .quiz-hints {
+
+      background: rgba(255, 215, 0, 0.1);
+
+      border: 1px solid #ffd700;
+
+      border-radius: 8px;
+
+      padding: 15px;
+
+      margin: 15px 0;
+
+    }
+
+
+
+    .quiz-hints h4 {
+
+      color: #ffd700;
+
+      margin: 0 0 10px 0;
+
+      font-size: 0.9rem;
+
+    }
+
+
+
+    .quiz-hint {
+
+      background: rgba(0, 229, 255, 0.1);
+
+      border-left: 3px solid #00e5ff;
+
+      padding: 10px;
+
+      margin: 8px 0;
+
+      border-radius: 4px;
+
+    }
+
+
+
+    .quiz-hint strong {
+
+      color: #00e5ff;
+
+    }
+
+
+
+    .nav-row {
+
+      margin-top: 28px;
+
+      font-size: 0.75rem;
+
+    }
+
+
+
+    .nav-row a {
+
+      color: #b8bbd0;
+
+      text-decoration: none;
+
+    }
+
+
+
+    .nav-row a:hover {
+
+      color: #00e5ff;
+
+    }
+
+
+
+    .proceed-btn {
+
+      display: inline-block;
+
+      padding: 10px 20px;
+
+      background: #ffd700;
+
+      color: #000;
+
+      text-decoration: none;
+
+      border-radius: 6px;
+
+      font-weight: bold;
+
+      transition: 0.3s;
+
+      border: none;
+
+      cursor: pointer;
+
+      font-family: inherit;
+
+    }
+
+
+
+    .proceed-btn:hover {
+
+      background: #ffed4e;
+
+      box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+
+    }
+  </style>
+
+</head>
+
+
+
+<body>
+
+  <div class="theory-container">
+
+    <h1>{{ t.xss_theory_h1 }}</h1>
+
+    <div class="panel-header">THEORY</div>
+
+    <div class="split-layout{% if show_quiz and not error %} quiz-mode{% endif %}">
+
+      <div class="panel">
+
+        <section>
+
+          <p>{{ t.xss_theory_p1 }}</p>
+
+          <p>{{ t.xss_theory_p2 }}</p>
+
+          <p>{{ t.xss_theory_p3 }}</p>
+
+          <p style="color:#99d3ff;font-size:0.85rem;">e.g. <code>&lt;script&gt;alert(1)&lt;/script&gt;</code>
+
+            Â·
+
+            <code>&lt;img src=x onerror=alert(1)&gt;</code> Â· <code>javascript:alert(1)</code>
+
+          </p>
+
+          <p>{{ t.xss_theory_p4 }}</p>
+
+          <p>{{ t.xss_theory_p5 }}</p>
+
+          <p>{{ t.xss_theory_p6 }}</p>
+
+        </section>
+
+      </div>
+
+      <div class="panel quiz-box{% if not show_quiz and not error %} hidden{% endif %}">
+
+        <h3>{{ t.xss_theory_quiz_heading }}</h3>
+
+        {% if error %}<p class="error">{{ error }}</p>{% endif %}
+
+
+
+        <form method="POST" action="{{ url_for('xss.verify_xss_theory') }}">
+
+          <div class="q-block">
+
+            <p class="q-num">XSS_QUIZ</p>
+
+            <p>{{ t.xss_th_q1 }}</p>
+
+            <label><input type="radio" name="q1" value="w1" required> {{ t.xss_th_q1o1 }}</label>
+
+            <label><input type="radio" name="q1" value="corr"> {{ t.xss_th_q1o2 }}</label>
+
+            <label><input type="radio" name="q1" value="w2"> {{ t.xss_th_q1o3 }}</label>
+
+          </div>
+
+
+
+          <div class="q-block">
+
+            <p>{{ t.xss_th_q2 }}</p>
+
+            <label><input type="radio" name="q2" value="corr" required> {{ t.xss_th_q2o1 }}</label>
+
+            <label><input type="radio" name="q2" value="w1"> {{ t.xss_th_q2o2 }}</label>
+
+            <label><input type="radio" name="q2" value="w2"> {{ t.xss_th_q2o3 }}</label>
+
+          </div>
+
+
+
+          <div class="q-block">
+
+            <p>{{ t.xss_th_q3 }}</p>
+
+            <label><input type="radio" name="q3" value="w1" required> {{ t.xss_th_q3o1 }}</label>
+
+            <label><input type="radio" name="q3" value="corr"> {{ t.xss_th_q3o2 }}</label>
+
+            <label><input type="radio" name="q3" value="w2"> {{ t.xss_th_q3o3 }}</label>
+
+          </div>
+
+
+
+          <div class="q-block">
+
+            <p>{{ t.xss_th_q4 }}</p>
+
+            <label><input type="radio" name="q4" value="w1" required> {{ t.xss_th_q4o1 }}</label>
+
+            <label><input type="radio" name="q4" value="corr"> {{ t.xss_th_q4o2 }}</label>
+
+            <label><input type="radio" name="q4" value="w2"> {{ t.xss_th_q4o3 }}</label>
+
+          </div>
+
+
+
+          <div class="q-block">
+
+            <p>{{ t.xss_th_q5 }}</p>
+
+            <label><input type="radio" name="q5" value="w1" required> {{ t.xss_th_q5o1 }}</label>
+
+            <label><input type="radio" name="q5" value="corr"> {{ t.xss_th_q5o2 }}</label>
+
+            <label><input type="radio" name="q5" value="w2"> {{ t.xss_th_q5o3 }}</label>
+
+          </div>
+
+
+
+          <div class="q-block">
+
+            <p>{{ t.xss_th_q6 }}</p>
+
+            <label><input type="radio" name="q6" value="w1" required> {{ t.xss_th_q6o1 }}</label>
+
+            <label><input type="radio" name="q6" value="corr"> {{ t.xss_th_q6o2 }}</label>
+
+            <label><input type="radio" name="q6" value="w2"> {{ t.xss_th_q6o3 }}</label>
+
+          </div>
+
+
+
+          <button type="submit" class="btn-hack">{{ t.xss_theory_submit }}</button>
+
+        </form>
+
+      </div>
+
+
+
+    </div>
+
+
+
+    <div class="nav-row" style="display: flex; justify-content: space-between; gap: 20px;">
+
+      {% if show_quiz or error %}
+
+      <span style="color:#ff7b7b;">Complete and submit all quiz answers to continue.</span>
+
+      {% else %}
+
+      <a href="{{ url_for('main.index') }}">[&lt;&lt; DASHBOARD]</a>
+
+      <a href="{{ url_for('xss.xss_theory') }}?quiz=1" class="proceed-btn">ПРОЙТИ К КВИЗУ →</a>
+
+      {% endif %}
+
+    </div>
+
+  </div>
+
+
+
+</body>
+
+
+
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Voice Assistant Test</title>
+    <style>
+        body {
+            background: #050505;
+            color: #00ff41;
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+        }
+        .voice-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            border: 2px solid #00ff41;
+            background: #050505;
+            color: #00ff41;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+        }
+        .chat-box {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 350px;
+            height: 400px;
+            background: #0a0a0a;
+            border: 1px solid #00ff41;
+            border-radius: 10px;
+            padding: 15px;
+            display: none;
+            overflow-y: auto;
+        }
+        .messages {
+            color: #00ff41;
+            font-family: monospace;
+            font-size: 12px;
+            height: 300px;
+            overflow-y: auto;
+            margin-bottom: 10px;
+        }
+        .controls button {
+            background: #00ff41;
+            color: #050505;
+            border: none;
+            padding: 8px 15px;
+            margin-right: 10px;
+            cursor: pointer;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <h1>Voice Assistant Test Page</h1>
+    <p>If you see this page, the voice assistant button should appear in the bottom right corner.</p>
+
+    <button class="voice-btn" onclick="toggleChat()">
+        <span id="voiceIcon">mic</span>
+    </button>
+
+    <div class="chat-box" id="chatBox">
+        <div style="color: #00ff41; font-weight: bold; margin-bottom: 10px;">VOICE ASSISTANT</div>
+        <div class="messages" id="messages">
+            Click Start to record your message...
+        </div>
+        <div class="controls">
+            <button onclick="startRecording()" id="recordBtn">Start</button>
+            <button onclick="clearChat()">Clear</button>
+        </div>
+    </div>
+
+    <script>
+        let mediaRecorder;
+        let audioChunks = [];
+        let isRecording = false;
+
+        function toggleChat() {
+            const chatBox = document.getElementById('chatBox');
+            const icon = document.getElementById('voiceIcon');
+            
+            if (chatBox.style.display === 'none') {
+                chatBox.style.display = 'block';
+                icon.textContent = 'close';
+            } else {
+                chatBox.style.display = 'none';
+                icon.textContent = 'mic';
+                if (isRecording) {
+                    stopRecording();
+                }
+            }
+        }
+
+        async function startRecording() {
+            if (isRecording) {
+                stopRecording();
+                return;
+            }
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                mediaRecorder = new MediaRecorder(stream);
+                audioChunks = [];
+
+                mediaRecorder.ondataavailable = (event) => {
+                    audioChunks.push(event.data);
+                };
+
+                mediaRecorder.onstop = async () => {
+                    const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+                    await sendAudioToServer(audioBlob);
+                };
+
+                mediaRecorder.start();
+                isRecording = true;
+                
+                document.getElementById('recordBtn').textContent = 'Stop';
+                document.getElementById('recordBtn').style.background = '#ff3e3e';
+                addMessage('Recording...');
+
+            } catch (error) {
+                addMessage('Error: ' + error.message);
+                console.error('Microphone error:', error);
+            }
+        }
+
+        function stopRecording() {
+            if (mediaRecorder && isRecording) {
+                mediaRecorder.stop();
+                mediaRecorder.stream.getTracks().forEach(track => track.stop());
+                isRecording = false;
+                
+                document.getElementById('recordBtn').textContent = 'Start';
+                document.getElementById('recordBtn').style.background = '#00ff41';
+                addMessage('Processing...');
+            }
+        }
+
+        async function sendAudioToServer(audioBlob) {
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            
+            try {
+                const response = await fetch('/gemini/chat', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    addMessage('You: ' + (data.transcription || 'Audio processed'));
+                    addMessage('AI: ' + data.response);
+                } else {
+                    addMessage('Error: ' + (data.error || 'Processing failed'));
+                }
+            } catch (error) {
+                addMessage('Connection error: ' + error.message);
+                console.error('Server error:', error);
+            }
+        }
+
+        function addMessage(text) {
+            const messages = document.getElementById('messages');
+            messages.innerHTML += text + '<br>';
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        function clearChat() {
+            document.getElementById('messages').innerHTML = 'Chat cleared. Ready for new conversation.<br>';
+        }
+
+        // Test API health on load
+        window.onload = async function() {
+            try {
+                const response = await fetch('/gemini/health');
+                const data = await response.json();
+                
+                if (data.api_configured) {
+                    addMessage('System: Gemini API is ready.');
+                } else {
+                    addMessage('System: Gemini API not configured.');
+                }
+            } catch (error) {
+                addMessage('System: Failed to connect to server.');
+            }
+        };
+    </script>
+</body>
+</html>
