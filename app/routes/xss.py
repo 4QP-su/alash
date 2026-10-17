@@ -5,7 +5,7 @@ from app.models import (
  has_hint, log_attempt, add_reward,
  mark_theory_passed, has_passed_theory,
 )
-from app.config import load_levels
+from app.config import load_levels, t_for_lang
 from .utils import login_required, current_user
 
 xss_bp = Blueprint('xss', __name__)
@@ -99,9 +99,12 @@ def xss_level(level_id):
    is_won = '<script>' in val_low and 'alert' in val_low
 
   elif level_id == 2:
-   blocked = bool(re.search(r'<script>', val))
-   has_spaces = bool(re.search(r'<\s+script\s*>', val, re.IGNORECASE))
-   is_won = has_spaces and not blocked and 'alert' in val_low
+   # Level 2: Case-insensitive filter bypass
+   # Filter blocks lowercase <script> but allows uppercase/mixed case
+   blocked = bool(re.search(r'<script>', val, re.IGNORECASE))
+   # Check if user used uppercase/mixed case to bypass
+   has_uppercase = bool(re.search(r'<[Ss][Cc][Rr][Ii][Pp][Tt]>', val))
+   is_won = has_uppercase and 'alert' in val_low
 
   elif level_id == 3:
    no_script = not bool(re.search(r'<\s*script', val_low))
@@ -128,6 +131,9 @@ def xss_level(level_id):
   else:
    message = " Payload не сработал. Попробуй ещё раз."
 
+ lang = session.get('lang', 'ru')
+ t = t_for_lang(lang)
+
  return render_template(
   'xss.html',
   level=level_id,
@@ -138,4 +144,6 @@ def xss_level(level_id):
   hint_bought=hint_bought,
   is_already_completed=already or is_won,
   is_won=is_won,
+  t=t,
+  hint_price=150,
  )

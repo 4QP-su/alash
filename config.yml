@@ -1,0 +1,7 @@
+tunnel: 32d6305cf18165b20a8001a32e2430d1
+credentials-file: C:\Users\Erasyl\.cloudflared\32d6305cf18165b20a8001a32e2430d1.json
+
+ingress:
+  - hostname: hack4lab.lol
+    service: http://localhost:8000
+  - service: http_status:404

@@ -432,6 +432,26 @@
       box-shadow: 0 0 10px rgba(204, 0, 255, 0.5);
 
     }
+
+    .simple-theory {
+      background: rgba(204, 0, 255, 0.05);
+      border: 1px solid rgba(204, 0, 255, 0.2);
+      padding: 15px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+
+    .simple-theory h3 {
+      color: #cc00ff;
+      margin-top: 0;
+      font-size: 0.9rem;
+    }
+
+    .simple-theory p {
+      font-size: 0.95rem;
+      line-height: 1.7;
+      margin: 0;
+    }
   </style>
 
 </head>
@@ -453,6 +473,22 @@
     <div class="split-layout{% if show_quiz and not error %} quiz-mode{% endif %}">
 
       <div class="panel">
+
+        <!-- Simple Theory for Beginners -->
+        <section class="simple-theory">
+          <h3>🎓 {{ t.simple_theory_title | default('IN SIMPLE WORDS') }}</h3>
+          <p>
+            {% if level == 1 %}
+            {{ t.csrf_level1_simple_theory }}
+            {% elif level == 2 %}
+            {{ t.csrf_level2_simple_theory }}
+            {% elif level == 3 %}
+            {{ t.csrf_level3_simple_theory }}
+            {% else %}
+            {{ t.csrf_level1_simple_theory }}
+            {% endif %}
+          </p>
+        </section>
 
         <div class="theory-box">
 

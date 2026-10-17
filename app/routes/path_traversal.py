@@ -132,30 +132,10 @@ def verify_path_theory(level_id):
 
   return redirect(url_for('path.path_level', level_id=level_id))
 
- lang = session.get('lang', 'ru')
+ return render_template('path_theory.html', level_id=level_id, level_data=level_data, wrong=wrong)
 
- from app.config import t_for_lang
 
- err = t_for_lang(lang).get('theory_quiz_error', 'ACCESS_DENIED')
 
- # Quiz hints for wrong answers
- from app.config import t_for_lang
- t = t_for_lang(session.get('lang', 'ru'))
- quiz_hints = t.get('quiz_hints', {}).get('path', {})
-
- hint_messages = []
- for q_num in wrong:
-  if q_num in quiz_hints:
-   hint_messages.append(f"Q{q_num}: {quiz_hints[q_num]}")
-
- wrong_questions_text = t.get('wrong_questions', 'Wrong questions')
- details = {
-
-  'ru': f"{err} {wrong_questions_text}: {', '.join(wrong)}.\n\n" + "\n".join(hint_messages) + "\n\nnepemotpu teopuio no npo6yi eshe pa3.",
-
-  'kz': f"{err} {wrong_questions_text}: {', '.join(wrong)}.\n\n" + "\n".join(hint_messages) + "\n\nTeophnyo kaira kapan, tarbai kaph koph.",
-
- }
 
 
 @path_bp.route('/PATH')

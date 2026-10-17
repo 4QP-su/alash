@@ -3,7 +3,7 @@
 
 <head>
   <meta charset="UTF-8">
-  <title>TERMINAL | Achievements</title>
+  <title>TERMINAL | {{ t.achievements_title }}</title>
   <style>
     :root {
       --neon-green: #00ff41;
@@ -53,88 +53,238 @@
     .subline {
       width: 100%;
       max-width: 980px;
-      margin-bottom: 30px;
+      margin-bottom: 24px;
       color: #9ab89e;
       font-size: 0.9rem;
+    }
+
+    /* Boot terminal (same vibe as leaderboard) */
+    .ach-boot {
+      width: 100%;
+      max-width: 980px;
+      min-height: 200px;
+      margin-bottom: 24px;
+      padding: 18px 20px;
+      border: 1px solid rgba(0, 255, 65, 0.22);
+      background: rgba(0, 0, 0, 0.75);
+      box-shadow: inset 0 0 24px rgba(0, 255, 65, 0.04), 0 0 20px rgba(0, 255, 65, 0.06);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .ach-boot__title {
+      font-size: 0.68rem;
+      color: #5a8a62;
+      letter-spacing: 0.2em;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .ach-boot__log {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 0.78rem;
+      line-height: 1.65;
+      color: #7ddf9a;
+    }
+
+    .ach-boot__log li {
+      opacity: 0;
+      transform: translateX(-6px);
+      animation: boot-line-in 0.35s ease forwards;
+    }
+
+    .ach-boot__log li.is-typing::after {
+      content: '_';
+      animation: boot-cursor 0.8s step-end infinite;
+      color: var(--neon-green);
+    }
+
+    .ach-boot__matrix {
+      margin-top: 14px;
+      height: 48px;
+      overflow: hidden;
+      font-size: 0.62rem;
+      line-height: 1.1;
+      color: rgba(0, 255, 65, 0.35);
+      letter-spacing: 0.12em;
+      white-space: pre;
+      opacity: 0.85;
+    }
+
+    @keyframes boot-line-in {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes boot-cursor {
+      50% { opacity: 0; }
+    }
+
+    @keyframes glitch-flicker {
+      0% { transform: translate(0); }
+      20% { transform: translate(-1px, 1px); }
+      40% { transform: translate(1px, -1px); }
+      60% { transform: translate(-1px, 0); }
+      80% { transform: translate(1px, 1px); }
+      100% { transform: translate(0); }
+    }
+
+    .ach-content {
+      width: 100%;
+      max-width: 980px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .ach-content.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .ach-content.is-hidden {
+      pointer-events: none;
+      position: absolute;
+      left: -9999px;
+      visibility: hidden;
     }
 
     .achievements-grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px;
-      width: 100%;
-      max-width: 980px;
+      gap: 18px;
       margin-bottom: 40px;
     }
 
     .badge-card {
-      background-color: #000;
-      border: 1px solid var(--dark-green);
-      padding: 20px;
-      border-radius: 12px;
+      position: relative;
+      background: rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(0, 255, 65, 0.14);
+      padding: 18px 18px 16px;
       box-sizing: border-box;
-      transition: all 0.2s ease;
       text-align: left;
+      transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+      overflow: hidden;
+    }
+
+    .badge-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(0, 255, 65, 0.35), transparent);
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    .badge-card:hover::before {
+      opacity: 1;
+    }
+
+    .badge-card:hover {
+      border-color: rgba(0, 255, 65, 0.35);
+      box-shadow: inset 0 0 20px rgba(0, 255, 65, 0.06), 0 0 16px rgba(0, 255, 65, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .badge-card:hover .level-title {
+      color: var(--neon-green);
+      text-shadow: 0 0 10px rgba(0, 255, 65, 0.5), 0 0 18px rgba(0, 255, 65, 0.2);
+      animation: glitch-flicker 0.42s steps(2, end);
+    }
+
+    .badge-card:hover .level-path {
+      color: var(--neon-green);
+      text-shadow: 0 0 8px rgba(0, 255, 65, 0.35);
     }
 
     .earned {
-      border-color: var(--neon-green);
-      box-shadow: 0 0 12px rgba(0, 255, 65, 0.12);
+      border-color: rgba(0, 255, 65, 0.45);
+      box-shadow: 0 0 14px rgba(0, 255, 65, 0.1);
+    }
+
+    .earned:hover {
+      box-shadow: inset 0 0 22px rgba(0, 255, 65, 0.08), 0 0 22px rgba(0, 255, 65, 0.18);
     }
 
     .locked {
-      opacity: 0.45;
-      filter: grayscale(1);
+      opacity: 0.42;
+      filter: grayscale(0.85);
+    }
+
+    .locked:hover {
+      opacity: 0.58;
+      filter: grayscale(0.5);
     }
 
     .status-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      border-bottom: 1px solid var(--dark-green);
+      border-bottom: 1px solid rgba(0, 255, 65, 0.12);
       padding-bottom: 8px;
       margin-bottom: 10px;
     }
 
     .level-path {
-      font-size: 0.72rem;
-      color: #888;
+      font-size: 0.7rem;
+      color: #666;
+      letter-spacing: 0.08em;
+      transition: color 0.2s, text-shadow 0.2s;
     }
 
     .earned .level-path {
-      color: var(--neon-green);
+      color: #6a9a72;
     }
 
     .status-tag {
-      font-size: 0.68rem;
+      font-size: 0.58rem;
       font-weight: bold;
-      padding: 3px 6px;
+      padding: 3px 8px;
       text-transform: uppercase;
-      border-radius: 4px;
+      letter-spacing: 0.12em;
+      border-radius: 2px;
+      transition: background 0.2s, box-shadow 0.2s, color 0.2s;
     }
 
     .locked .status-tag {
-      color: #999;
+      color: #888;
       border: 1px solid #333;
+      background: rgba(0, 0, 0, 0.4);
     }
 
     .earned .status-tag {
       color: #000;
       background-color: var(--neon-green);
+      border: 1px solid var(--neon-green);
+      box-shadow: 0 0 10px rgba(0, 255, 65, 0.35);
+    }
+
+    .badge-card:hover .earned .status-tag,
+    .earned.badge-card:hover .status-tag {
+      box-shadow: 0 0 14px rgba(0, 255, 65, 0.55);
     }
 
     .level-title {
-      font-size: 1.0rem;
+      font-size: 0.95rem;
       font-weight: bold;
       margin: 0 0 8px 0;
       color: #fff;
       text-transform: uppercase;
+      letter-spacing: 0.1em;
+      transition: color 0.2s, text-shadow 0.2s;
     }
 
     .achievement-desc {
-      color: #8a8a8a;
-      font-size: 0.85rem;
-      line-height: 1.35;
+      color: #8a9a8c;
+      font-size: 0.82rem;
+      line-height: 1.45;
       margin: 0;
     }
 
@@ -144,10 +294,13 @@
       transition: 0.2s;
       font-size: 0.9rem;
       text-transform: uppercase;
+      width: 100%;
+      max-width: 980px;
     }
 
     .back:hover {
       color: var(--neon-green);
+      text-shadow: 0 0 8px rgba(0, 255, 65, 0.35);
     }
   </style>
 </head>
@@ -155,30 +308,118 @@
 <body>
   <div class="shop-bar">
     <div style="font-weight: bold;">
-      <span style="color: #777;">BALANCE:</span>
+      <span style="color: #777;">{{ t.achievements_balance }}</span>
       <span style="color: var(--gold);">${{ current_user.balance }}</span>
     </div>
-    <div style="font-size: 0.8rem; color: #86a28a;">UNLOCKED: {{ unlocked_count }} / {{ total_badges }}</div>
+    <div style="font-size: 0.8rem; color: #86a28a;">{{ t.achievements_unlocked }} {{ unlocked_count }} / {{ total_badges }}</div>
   </div>
 
-  <h1>{{ ui_translations['achievements_title'] }}</h1>
-  <div class="subline">{{ ui_translations['achievements_subtitle'] }}</div>
+  <h1>{{ t.achievements_title }}</h1>
+  <div class="subline">{{ t.achievements_subtitle }}</div>
 
-  <div class="achievements-grid">
-    {% for badge in badges %}
-    <div class="badge-card {% if badge.earned %}earned{% else %}locked{% endif %}">
-      <div class="status-header">
-        <span class="level-path">{{ badge.code }}</span>
-        <span class="status-tag">{% if badge.earned %}{{ ui_translations["badge_acquired"] }}{% else %}{{
-          ui_translations["badge_locked"] }}{% endif %}</span>
-      </div>
-      <h3 class="level-title">{{ badge.title }}</h3>
-      <p class="achievement-desc">{{ badge.desc }}</p>
+  <div class="ach-boot" id="achBoot" aria-live="polite">
+    <div class="ach-boot__title">// SYNC_TROPHY_VAULT</div>
+    <ul class="ach-boot__log" id="achBootLog"></ul>
+    <div class="ach-boot__matrix" id="achBootMatrix" aria-hidden="true"></div>
+  </div>
+
+  <div class="ach-content is-hidden" id="achContent">
+    <div class="achievements-grid">
+      {% for badge in badges %}
+      <article class="badge-card {% if badge.earned %}earned{% else %}locked{% endif %}">
+        <div class="status-header">
+          <span class="level-path">{{ badge.code }}</span>
+          <span class="status-tag">{% if badge.earned %}{{ t.badge_acquired }}{% else %}{{ t.badge_locked }}{% endif %}</span>
+        </div>
+        <h3 class="level-title">{{ badge.title }}</h3>
+        <p class="achievement-desc">{{ badge.desc }}</p>
+      </article>
+      {% endfor %}
     </div>
-    {% endfor %}
   </div>
 
-  <a href="/dashboard" class="back">{{ ui_translations["return_to_base"] }}</a>
+  <a href="/" class="back">{{ t.return_to_base }}</a>
+
+  <script>
+    (function () {
+      var unlocked = {{ unlocked_count | tojson }};
+      var total = {{ total_badges | tojson }};
+
+      var bootLines = [
+        '> handshake: trophy_vault.secure',
+        '> query: SELECT badges FROM agent_progress',
+        '> decrypting achievement signatures...',
+        '> unlocked nodes: ' + unlocked + ' / ' + total,
+        '> render: trophy_matrix'
+      ];
+
+      function runMatrixRain() {
+        var el = document.getElementById('achBootMatrix');
+        if (!el) return;
+        var chars = '01アイウエオｱｲｳｴｵTROPHY';
+        var cols = 42;
+        var rows = 4;
+        var tick = 0;
+        var timer = setInterval(function () {
+          var lines = [];
+          for (var r = 0; r < rows; r++) {
+            var line = '';
+            for (var c = 0; c < cols; c++) {
+              line += chars[Math.floor(Math.random() * chars.length)];
+            }
+            lines.push(line);
+          }
+          el.textContent = lines.join('\n');
+          tick++;
+          if (tick > 12) clearInterval(timer);
+        }, 90);
+      }
+
+      function runBootSequence(done) {
+        var log = document.getElementById('achBootLog');
+        if (!log) {
+          done();
+          return;
+        }
+        var idx = 0;
+        runMatrixRain();
+
+        function next() {
+          if (idx >= bootLines.length) {
+            setTimeout(done, 280);
+            return;
+          }
+          var li = document.createElement('li');
+          li.textContent = bootLines[idx];
+          if (idx === bootLines.length - 1) li.classList.add('is-typing');
+          log.appendChild(li);
+          idx++;
+          setTimeout(next, 300 + Math.random() * 160);
+        }
+        next();
+      }
+
+      function revealContent() {
+        var boot = document.getElementById('achBoot');
+        var content = document.getElementById('achContent');
+        if (boot) {
+          boot.style.transition = 'opacity 0.4s ease';
+          boot.style.opacity = '0';
+          setTimeout(function () {
+            boot.style.display = 'none';
+          }, 420);
+        }
+        if (content) {
+          content.classList.remove('is-hidden');
+          requestAnimationFrame(function () {
+            content.classList.add('is-visible');
+          });
+        }
+      }
+
+      runBootSequence(revealContent);
+    })();
+  </script>
 </body>
 
 </html>

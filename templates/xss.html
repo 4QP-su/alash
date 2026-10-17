@@ -786,24 +786,22 @@
     {% if is_already_completed or is_won %}
     <div class="info-block win-block"
       style="border: 2px solid var(--neon-green); background: rgba(0, 255, 65, 0.1); padding: 20px; text-align: center; margin-top: 20px;">
-      <h2 style="color: var(--neon-green); margin: 0; letter-spacing: 3px;">>> ACCESS_GRANTED <<< /h2>
-          <p style="color: #fff; margin: 10px 0;">XSS вектор успешно исполнен. Узел {{ level }} под контролем.
-          </p>
-          <p style="font-size:0.75rem; color:var(--neon-green); margin-top:6px;">+100 XP &nbsp;|&nbsp; +$125
-            BALANCE</p>
+      <h2 style="color: var(--neon-green); margin: 0; letter-spacing: 3px;">{{ t.access_granted_title }}</h2>
+      <p style="color: #fff; margin: 10px 0;">{{ t.xss_success_message }}</p>
+      <p style="font-size:0.75rem; color:var(--neon-green); margin-top:6px;">+100 XP &nbsp;|&nbsp; +$125 BALANCE</p>
 
-          <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
-            <a href="{{ url_for('xss.xss_labs') }}" class="next-btn"
-              style="padding: 10px 20px; border: 1px solid var(--neon-green); color: var(--neon-green); text-decoration: none; font-weight: bold;">
-              [ ВЕРНУТЬСЯ В ХАБ XSS ]
-            </a>
+      <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+        <a href="{{ url_for('xss.xss_labs') }}" class="next-btn"
+          style="padding: 10px 20px; border: 1px solid var(--neon-green); color: var(--neon-green); text-decoration: none; font-weight: bold;">
+          {{ t.return_to_xss_hub }}
+        </a>
 
-            {% if level < 5 %} <a href="{{ url_for('xss.xss_level', level_id=level+1) }}" class="next-btn"
-              style="padding: 10px 20px; background: var(--neon-green); color: #000; text-decoration: none; font-weight: bold;">
-              СЛЕДУЮЩИЙ ВЕКТОР >>
-              </a>
-              {% endif %}
-          </div>
+        {% if level < 5 %} <a href="{{ url_for('xss.xss_level', level_id=level+1) }}" class="next-btn"
+          style="padding: 10px 20px; background: var(--neon-green); color: #000; text-decoration: none; font-weight: bold;">
+          {{ t.next_vector_btn }}
+          </a>
+          {% endif %}
+      </div>
     </div>
     {% elif message %}
     <div class="info-block error-block">
@@ -811,4 +809,16 @@
     </div>
     {% endif %}
 
+    <!-- Chat Assistant -->
+    {% with assistant_name='XSS_LEVEL_ASSISTANT', category='xss' %}
+    {% include '_chat_assistant.html' %}
+    {% endwith %}
+
     <!-- ПОДСКАЗКА -->
+    {% if hint_bought %}
+    <div class="info-block hint-block" style="margin-top: 20px;">
+      <h3>{{ t.hint_panel_title }}</h3>
+      <pre>{{ level_hint }}</pre>
+    </div>
+    {% endif %}
+</body>

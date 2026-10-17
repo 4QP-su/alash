@@ -308,32 +308,50 @@
         }
 
 
-
         .btn-hack:hover {
 
             background: #00dd00;
 
             box-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
 
+        }
 
 
-            .q-block input {
+        .simple-theory {
 
-                margin-right: 10px;
+            background: rgba(0, 255, 65, 0.05);
 
-                vertical-align: middle;
+            border: 1px solid rgba(0, 255, 65, 0.2);
 
-            }
+            padding: 15px;
 
+            border-radius: 8px;
 
-
-
-            margin-top: 28px;
-
-            font-size: 0.75rem;
+            margin-bottom: 20px;
 
         }
 
+
+        .simple-theory h3 {
+
+            color: #00ff41;
+
+            margin-top: 0;
+
+            font-size: 0.9rem;
+
+        }
+
+
+        .simple-theory p {
+
+            font-size: 0.95rem;
+
+            line-height: 1.7;
+
+            margin: 0;
+
+        }
 
 
         .nav-row a {
@@ -345,13 +363,11 @@
         }
 
 
-
         .nav-row a:hover {
 
             color: #00ff41;
 
         }
-
 
 
         .proceed-btn {
@@ -381,7 +397,6 @@
         }
 
 
-
         .proceed-btn:hover {
 
             background: #00dd00;
@@ -407,6 +422,22 @@
 
             <div class="panel">
 
+                <!-- Simple Theory for Beginners -->
+                <section class="simple-theory">
+                    <h3>🎓 {{ t.simple_theory_title | default('ПРОСТЫМИ СЛОВАМИ') }}</h3>
+                    <p>
+                        {% if level == 1 %}
+                        {{ t.sql_level1_simple_theory }}
+                        {% elif level == 2 %}
+                        {{ t.sql_level2_simple_theory }}
+                        {% elif level == 3 %}
+                        {{ t.sql_level3_simple_theory }}
+                        {% else %}
+                        {{ t.sql_level1_simple_theory }}
+                        {% endif %}
+                    </p>
+                </section>
+
                 <section>
 
                     <p>{{ t.sql_theory_p1 }}</p>
@@ -414,10 +445,8 @@
                     <p>{{ t.sql_theory_p2 }}</p>
 
                     <div class="code-sample">
-
                         <span>SELECT * FROM users WHERE login = '</span><span
                             class="hi">$user_input</span><span>';</span>
-
                     </div>
 
                     <p>{{ t.sql_theory_p3 }}</p>
@@ -435,15 +464,6 @@
                     <p>{{ t.sql_theory_p8 }}</p>
 
                 </section>
-
-            </div>
-
-            <div class="panel quiz-box{% if not show_quiz and not error %} hidden{% endif %}">
-
-                <h3>{{ t.sql_theory_quiz_heading }}</h3>
-
-                {% if error %}<p class="error">{{ error }}</p>{% endif %}
-
 
 
                 <form method="POST" action="{{ url_for('sql.verify_sql_theory') }}">

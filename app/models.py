@@ -52,7 +52,11 @@ def init_db():
 
    username TEXT UNIQUE NOT NULL,
 
-   email  TEXT UNIQUE NOT NULL,
+   email  TEXT UNIQUE,
+
+   phone  TEXT UNIQUE,
+
+   telegram TEXT UNIQUE,
 
    password TEXT NOT NULL,
 
@@ -136,6 +140,8 @@ def init_db():
 
    payload  TEXT,
 
+   ip_address TEXT,
+
    created_at TEXT DEFAULT (datetime('now')),
 
    FOREIGN KEY(user_id) REFERENCES users(id)
@@ -150,6 +156,87 @@ def init_db():
 
  conn.close()
 
+ # --- Системные настройки для админов ---
+ conn = get_db()
+ c = conn.cursor()
+ c.execute('''
+
+  CREATE TABLE IF NOT EXISTS system_settings (
+
+   key TEXT PRIMARY KEY,
+
+   value TEXT NOT NULL,
+
+   updated_at TEXT DEFAULT (datetime('now'))
+
+  )
+
+ ''')
+
+ # --- Журнал админских действий и банов ---
+ c.execute('''
+
+  CREATE TABLE IF NOT EXISTS activity_logs (
+
+   id   INTEGER PRIMARY KEY AUTOINCREMENT,
+
+   user_id INTEGER,
+
+   action TEXT NOT NULL,
+
+   details TEXT,
+
+   ip_address TEXT,
+
+   user_agent TEXT,
+
+   created_at TEXT DEFAULT (datetime('now')),
+
+   FOREIGN KEY(user_id) REFERENCES users(id)
+
+  )
+
+''')
+
+ conn.commit()
+ conn.close()
+
+ # Ensure legacy DB schemas are updated with new columns
+ _ensure_attempts_columns()
+ _ensure_activity_log_columns()
+
+
+def get_system_setting(key: str, default=None):
+ conn = get_db()
+ row = conn.execute(
+  "SELECT value FROM system_settings WHERE key = ?",
+  (key,),
+ ).fetchone()
+ conn.close()
+ return row['value'] if row else default
+
+
+def set_system_setting(key: str, value: str):
+ conn = get_db()
+ conn.execute(
+  "INSERT INTO system_settings(key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value, updated_at = datetime('now')",
+  (key, value),
+ )
+ conn.commit()
+ conn.close()
+
+
+ _ensure_user_columns()
+
+
+def log_activity(user_id: int, action: str, details: str = None, ip_address: str = None, user_agent: str = None):
+ conn = get_db()
+ conn.execute(
+  "INSERT INTO activity_logs(user_id, action, details, ip_address, user_agent) VALUES (?, ?, ?, ?, ?)",
+  (user_id, action, details, ip_address, user_agent),
+ )
+ conn.commit()
+ conn.close()
 
 
  _ensure_user_columns()
@@ -194,9 +281,19 @@ def _ensure_user_columns():
 
   alters.append("ALTER TABLE users ADD COLUMN sql_theory_passed INTEGER DEFAULT 0")
 
+ if 'telegram' not in cols:
+
+  alters.append("ALTER TABLE users ADD COLUMN telegram TEXT")
+
  for sql in alters:
 
   conn.execute(sql)
+
+  # Create unique index for telegram (NULL-safe)
+  try:
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_telegram_unique ON users(telegram) WHERE telegram IS NOT NULL")
+  except:
+    pass
 
  if alters:
 
@@ -244,7 +341,7 @@ def check_password(password: str, stored: str) -> bool:
 
 
 
-def create_user(username: str, email: str, password: str) -> dict:
+def create_user(username: str, email: str, password: str, phone: str = '', telegram: str = '') -> dict:
 
  """Регистрирует нового пользователя. Возвращает {'ok': True} или {'error': '...'}"""
 
@@ -252,13 +349,18 @@ def create_user(username: str, email: str, password: str) -> dict:
 
  c = conn.cursor()
 
+ # Нормализуем данные — пустые строки в None
+ email_clean = email.strip().lower() if email and email.strip() else None
+ phone_clean = phone.strip() if phone and phone.strip() else None
+ telegram_clean = telegram.strip().lower() if telegram and telegram.strip() else None
+
  try:
 
   c.execute(
 
-   "INSERT INTO users (username, email, password) VALUES (?, ?, ?)",
+   "INSERT INTO users (username, email, phone, telegram, password) VALUES (?, ?, ?, ?, ?)",
 
-   (username.strip(), email.strip().lower(), hash_password(password))
+   (username.strip(), email_clean, phone_clean, telegram_clean, hash_password(password))
 
   )
 
@@ -275,6 +377,10 @@ def create_user(username: str, email: str, password: str) -> dict:
   if "email" in str(e):
 
    return {"error": "Email уже зарегистрирован"}
+
+  if "phone" in str(e):
+
+   return {"error": "Номер телефона уже зарегистрирован"}
 
   return {"error": str(e)}
 
@@ -666,7 +772,7 @@ def _theory_column(category: str) -> str:
 
 
 
-def log_attempt(user_id: int, category: str, level_id: int, success: bool, payload: str = ""):
+def log_attempt(user_id: int, category: str, level_id: int, success: bool, payload: str = "", ip_address: str = None):
 
  conn = get_db()
 
@@ -686,9 +792,9 @@ def log_attempt(user_id: int, category: str, level_id: int, success: bool, paylo
 
  c.execute(
 
-  "INSERT INTO attempts (user_id, category, level_id, success, payload) VALUES (?, ?, ?, ?, ?)",
+  "INSERT INTO attempts (user_id, category, level_id, success, payload, ip_address) VALUES (?, ?, ?, ?, ?, ?)",
 
-  (user_id, category, level_id, int(success), payload[:500])
+  (user_id, category, level_id, int(success), payload[:500], ip_address)
 
  )
 
@@ -778,21 +884,51 @@ def get_rank(xp: int) -> dict:
 
 # ──────────────────────────────────────────────
 
+LEADERBOARD_TOP_N = 10
 
 
-def get_leaderboard(limit: int = 10) -> list:
+
+def get_leaderboard(limit: int = LEADERBOARD_TOP_N) -> list:
 
  conn = get_db()
 
  rows = conn.execute(
 
-  "SELECT username, xp, balance FROM users ORDER BY xp DESC LIMIT ?", (limit,)
+  "SELECT id, username, xp, balance FROM users ORDER BY xp DESC LIMIT ?", (limit,)
 
  ).fetchall()
 
  conn.close()
 
  return [dict(r) for r in rows]
+
+
+
+
+
+def get_user_leaderboard_position(user_id: int) -> int:
+
+ conn = get_db()
+
+ row = conn.execute(
+
+  """
+
+  SELECT 1 + COUNT(*) AS pos
+
+  FROM users
+
+  WHERE xp > (SELECT xp FROM users WHERE id = ?)
+
+  """,
+
+  (user_id,),
+
+ ).fetchone()
+
+ conn.close()
+
+ return int(row["pos"]) if row else 0
 
 
 
@@ -845,3 +981,480 @@ def get_user_stats(user_id: int) -> dict:
   "last_activity": last_activity,
 
  }
+
+
+
+
+# ──────────────────────────────────────────────
+
+# Admin Functions
+
+# ──────────────────────────────────────────────
+
+
+def _ensure_admin_tables():
+
+  """Создаёт таблицы для админ-функционала если их нет."""
+
+  conn = get_db()
+
+  c = conn.cursor()
+
+
+  # Таблица объявлений
+
+  c.execute('''
+
+   CREATE TABLE IF NOT EXISTS announcements (
+
+    id   INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    title TEXT NOT NULL,
+
+    message TEXT NOT NULL,
+
+    is_active INTEGER DEFAULT 1,
+
+    created_by INTEGER NOT NULL,
+
+    created_at TEXT DEFAULT (datetime('now')),
+
+    expires_at TEXT,
+
+    FOREIGN KEY(created_by) REFERENCES users(id)
+
+   )
+
+  ''')
+
+
+  # Таблица настроек системы
+
+  c.execute('''
+
+   CREATE TABLE IF NOT EXISTS system_settings (
+
+    key TEXT PRIMARY KEY,
+
+    value TEXT NOT NULL,
+
+    updated_at TEXT DEFAULT (datetime('now'))
+
+   )
+
+  ''')
+
+
+  # Таблица логов активности
+
+  c.execute('''
+
+   CREATE TABLE IF NOT EXISTS activity_logs (
+
+    id   INTEGER PRIMARY KEY AUTOINCREMENT,
+
+    user_id INTEGER,
+
+    action TEXT NOT NULL,
+
+    details TEXT,
+
+    ip_address TEXT,
+
+    user_agent TEXT,
+
+    created_at TEXT DEFAULT (datetime('now')),
+
+    FOREIGN KEY(user_id) REFERENCES users(id)
+
+   )
+
+  ''')
+
+  conn.commit()
+
+  conn.close()
+
+
+def _ensure_attempts_columns():
+  conn = get_db()
+  cols = [row['name'] for row in conn.execute("PRAGMA table_info(attempts)").fetchall()]
+  alters = []
+  if 'ip_address' not in cols:
+    alters.append("ALTER TABLE attempts ADD COLUMN ip_address TEXT")
+  if 'created_at' not in cols:
+    alters.append("ALTER TABLE attempts ADD COLUMN created_at TEXT DEFAULT (datetime('now'))")
+  for stmt in alters:
+    conn.execute(stmt)
+  conn.commit()
+  conn.close()
+
+
+def _ensure_activity_log_columns():
+  conn = get_db()
+  cols = [row['name'] for row in conn.execute("PRAGMA table_info(activity_logs)").fetchall()]
+  alters = []
+  if 'ip_address' not in cols:
+    alters.append("ALTER TABLE activity_logs ADD COLUMN ip_address TEXT")
+  if 'user_agent' not in cols:
+    alters.append("ALTER TABLE activity_logs ADD COLUMN user_agent TEXT")
+  for stmt in alters:
+    conn.execute(stmt)
+  conn.commit()
+  conn.close()
+
+
+# ──── Users Management ────
+
+def get_all_users(sort_by='xp', limit=None):
+
+  """Получить список всех пользователей с их статистикой."""
+
+  conn = get_db()
+
+  query = """
+
+    SELECT id, username, email, xp, balance, created_at, last_login, is_admin
+
+    FROM users
+
+    ORDER BY {} DESC
+
+  """.format(sort_by)
+
+  if limit:
+
+   query += f" LIMIT {limit}"
+
+  rows = conn.execute(query).fetchall()
+
+  conn.close()
+
+  return [dict(r) for r in rows]
+
+
+def reset_user_progress(user_id: int):
+
+  """Сбросить весь прогресс пользователя."""
+
+  conn = get_db()
+
+  conn.execute("DELETE FROM progress WHERE user_id = ?", (user_id,))
+
+  conn.execute("DELETE FROM attempts WHERE user_id = ?", (user_id,))
+
+  conn.execute("UPDATE users SET xp = 0 WHERE id = ?", (user_id,))
+
+  conn.commit()
+
+  conn.close()
+
+
+def ban_user(user_id: int):
+
+  """Забанить пользователя (удалить)."""
+
+  conn = get_db()
+
+  conn.execute("DELETE FROM users WHERE id = ?", (user_id,))
+
+  conn.commit()
+
+  conn.close()
+
+
+def get_user_profile(user_id: int):
+
+  """Получить полный профиль пользователя для админа."""
+
+  conn = get_db()
+
+  user = conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
+
+  if not user:
+
+    conn.close()
+
+    return None
+
+  progress = conn.execute(
+
+   "SELECT category, level_id, completed, attempts FROM progress WHERE user_id = ? ORDER BY category, level_id",
+
+   (user_id,)
+
+  ).fetchall()
+
+  stats = get_user_stats(user_id)
+
+  conn.close()
+
+  return {
+
+   'user': dict(user),
+
+   'progress': [dict(p) for p in progress],
+
+   'stats': stats,
+
+  }
+
+
+# ──── Analytics ────
+
+def get_level_completion_stats():
+
+  """Получить статистику прохождения по каждому уровню."""
+
+  conn = get_db()
+
+  rows = conn.execute("""
+
+    SELECT
+
+     category,
+
+     level_id,
+
+     COUNT(*) as total_users,
+
+     SUM(completed) as users_completed,
+
+     ROUND(100.0 * SUM(completed) / COUNT(*), 1) as completion_rate
+
+    FROM progress
+
+    GROUP BY category, level_id
+
+    ORDER BY category, level_id
+
+  """).fetchall()
+
+  conn.close()
+
+  return [dict(r) for r in rows]
+
+
+def get_dropoff_analysis():
+
+  """Найти уровни где чаще всего застревают/бросают."""
+
+  conn = get_db()
+
+  rows = conn.execute("""
+
+    SELECT
+
+     category,
+
+     level_id,
+
+     COUNT(*) as total_attempts,
+
+     SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successes,
+
+     ROUND(100.0 * SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) / COUNT(*), 1) as success_rate
+
+    FROM attempts
+
+    GROUP BY category, level_id
+
+    ORDER BY success_rate ASC, total_attempts DESC
+
+  """).fetchall()
+
+  conn.close()
+
+  return [dict(r) for r in rows]
+
+
+def get_activity_by_date(days=30):
+
+  """Получить активность по дням (регистрации, решённые задачи)."""
+
+  conn = get_db()
+
+  rows = conn.execute("""
+
+    SELECT
+
+     DATE(created_at) as date,
+
+     (SELECT COUNT(*) FROM users WHERE DATE(created_at) = DATE(attempts.created_at)) as new_users,
+
+     COUNT(*) as total_attempts,
+
+     SUM(CASE WHEN success = 1 THEN 1 ELSE 0 END) as successful_attempts
+
+    FROM attempts
+
+    WHERE created_at >= datetime('now', '-' || ? || ' days')
+
+    GROUP BY DATE(created_at)
+
+    ORDER BY date DESC
+
+  """, (days,)).fetchall()
+
+  conn.close()
+
+  return [dict(r) for r in rows]
+
+
+# ──── Announcements ────
+
+def create_announcement(title: str, message: str, created_by: int, expires_at=None):
+
+  """Создать новое объявление."""
+
+  conn = get_db()
+
+  conn.execute(
+
+   "INSERT INTO announcements (title, message, created_by, expires_at) VALUES (?, ?, ?, ?)",
+
+   (title, message, created_by, expires_at)
+
+  )
+
+  conn.commit()
+
+  conn.close()
+
+
+def get_active_announcements():
+
+  """Получить активные объявления."""
+
+  conn = get_db()
+
+  rows = conn.execute("""
+
+    SELECT * FROM announcements
+
+    WHERE is_active = 1 AND (expires_at IS NULL OR expires_at > datetime('now'))
+
+    ORDER BY created_at DESC
+
+  """).fetchall()
+
+  conn.close()
+
+  return [dict(r) for r in rows]
+
+
+def get_all_announcements():
+
+  """Получить все объявления (для админа)."""
+
+  conn = get_db()
+
+  rows = conn.execute("SELECT * FROM announcements ORDER BY created_at DESC").fetchall()
+
+  conn.close()
+
+  return [dict(r) for r in rows]
+
+
+def deactivate_announcement(announcement_id: int):
+
+  """Деактивировать объявление."""
+
+  conn = get_db()
+
+  conn.execute("UPDATE announcements SET is_active = 0 WHERE id = ?", (announcement_id,))
+
+  conn.commit()
+
+  conn.close()
+
+
+# ──── System Settings ────
+
+def get_setting(key: str, default=None):
+
+  """Получить значение системной настройки."""
+
+  conn = get_db()
+
+  row = conn.execute("SELECT value FROM system_settings WHERE key = ?", (key,)).fetchone()
+
+  conn.close()
+
+  if row:
+
+    try:
+
+      return int(row['value'])
+
+    except ValueError:
+
+      return row['value']
+
+  return default
+
+
+def set_setting(key: str, value):
+
+  """Установить значение системной настройки."""
+
+  conn = get_db()
+
+  conn.execute(
+
+   "INSERT OR REPLACE INTO system_settings (key, value, updated_at) VALUES (?, ?, ?)",
+
+   (key, str(value), datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+
+  )
+
+  conn.commit()
+
+  conn.close()
+
+
+# ──── Activity Logs ────
+
+def log_activity(user_id, action: str, details=None, ip_address=None, user_agent=None):
+
+  """Залогировать действие администратора или системы."""
+
+  conn = get_db()
+
+  conn.execute(
+
+   "INSERT INTO activity_logs (user_id, action, details, ip_address, user_agent) VALUES (?, ?, ?, ?, ?)",
+
+   (user_id, action, details, ip_address, user_agent)
+
+  )
+
+  conn.commit()
+
+  conn.close()
+
+
+def get_activity_logs(limit=100):
+
+  """Получить логи активности."""
+
+  conn = get_db()
+
+  rows = conn.execute("""
+
+    SELECT al.*, u.username
+
+    FROM activity_logs al
+
+    LEFT JOIN users u ON al.user_id = u.id
+
+    ORDER BY al.created_at DESC
+
+    LIMIT ?
+
+  """, (limit,)).fetchall()
+
+  conn.close()
+
+  return [dict(r) for r in rows]
+

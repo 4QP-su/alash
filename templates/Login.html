@@ -1,191 +1,464 @@
-<!DOCTYPE html>
-<html lang="ru">
-
-<head>
- <meta charset="UTF-8">
- <title>LOGIN // HACKLAB</title>
- <style>
- * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
- }
-
- body {
-  background: #0a0a0a;
-  color: #00ff88;
-  font-family: 'Courier New', monospace;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
- }
-
- .terminal {
-  width: 420px;
-  border: 1px solid #00ff88;
-  padding: 36px 32px;
-  background: #0d0d0d;
- }
-
- .term-header {
-  font-size: 11px;
-  color: #444;
-  margin-bottom: 24px;
-  border-bottom: 1px solid #1a1a1a;
-  padding-bottom: 12px;
- }
-
- h1 {
-  font-size: 18px;
-  letter-spacing: 3px;
-  margin-bottom: 28px;
-  color: #00ff88;
- }
-
- .flash-list {
-  list-style: none;
-  margin-bottom: 16px;
- }
-
- .flash-error {
-  color: #ff4444;
-  font-size: 13px;
-  margin-bottom: 6px;
- }
-
- .flash-success {
-  color: #00ff88;
-  font-size: 13px;
-  margin-bottom: 6px;
- }
-
- .flash-warning {
-  color: #ffaa00;
-  font-size: 13px;
-  margin-bottom: 6px;
- }
-
- .field {
-  margin-bottom: 18px;
- }
-
- label {
-  display: block;
-  font-size: 11px;
-  color: #666;
-  letter-spacing: 1px;
-  margin-bottom: 6px;
- }
-
- input {
-  width: 100%;
-  background: #111;
-  border: 1px solid #333;
-  border-bottom-color: #00ff88;
-  color: #00ff88;
-  font-family: 'Courier New', monospace;
-  font-size: 14px;
-  padding: 10px 12px;
-  outline: none;
-  transition: border-color 0.2s;
- }
-
- input:focus {
-  border-color: #00ff88;
- }
-
- .btn {
-  width: 100%;
-  background: transparent;
-  border: 1px solid #00ff88;
-  color: #00ff88;
-  font-family: 'Courier New', monospace;
-  font-size: 13px;
-  letter-spacing: 2px;
-  padding: 12px;
-  cursor: pointer;
-  margin-top: 8px;
-  transition: background 0.2s, color 0.2s;
- }
-
- .btn:hover {
-  background: #00ff88;
-  color: #0a0a0a;
- }
-
- .link-row {
-  margin-top: 20px;
-  font-size: 12px;
-  color: #444;
-  text-align: center;
- }
-
- .link-row a {
-  color: #00ff88;
-  text-decoration: none;
- }
-
- .link-row a:hover {
-  text-decoration: underline;
- }
-
- .lang-row {
-  margin-top: 24px;
-  text-align: center;
-  font-size: 11px;
-  color: #333;
- }
-
- .lang-row a {
-  color: #555;
-  text-decoration: none;
-  margin: 0 6px;
- }
-
- .lang-row a:hover {
-  color: #00ff88;
- }
- </style>
-</head>
-
-<body>
- <div class="terminal">
- <div class="term-header">HACKLAB_OS v2.6 // SECURE_TERMINAL // {{ curr_lang | upper }}</div>
- <h1>{{ t.login_title | upper }}</h1>
-
- {% with messages = get_flashed_messages(with_categories=true) %}
- {% if messages %}
- <ul class="flash-list">
-  {% for cat, msg in messages %}
-  <li class="flash-{{ cat }}">[ {{ msg }} ]</li>
-  {% endfor %}
- </ul>
- {% endif %}
- {% endwith %}
-
- <form method="POST">
-  <div class="field">
-  <label>{{ t.username_label | upper }} ></label>
-  <input type="text" name="username" autocomplete="username" required autofocus>
-  </div>
-  <div class="field">
-  <label>{{ t.password_label | upper }} ></label>
-  <input type="password" name="password" autocomplete="current-password" required>
-  </div>
-  <button class="btn" type="submit">> {{ t.login_btn | upper }}</button>
- </form>
-
- <div class="link-row">
-  {{ t.no_account }} <a href="{{ url_for('auth.register') }}">{{ t.register_btn }}</a>
- </div>
-
- <div class="lang-row">
-  <a href="{{ url_for('main.set_lang', lang='ru') }}">RU</a>
-  <a href="{{ url_for('main.set_lang', lang='kz') }}">KZ</a>
-  <a href="{{ url_for('main.set_lang', lang='en') }}">EN</a>
- </div>
- </div>
-</body>
-
+<!DOCTYPE html>
+
+<html lang="ru">
+
+
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <title>LOGIN // HACKLAB</title>
+
+    <style>
+        * {
+
+            box-sizing: border-box;
+
+            margin: 0;
+
+            padding: 0;
+
+        }
+
+
+
+        body {
+
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background:
+                radial-gradient(circle at 20% 18%, rgba(0, 255, 136, 0.12), transparent 24%),
+                radial-gradient(circle at 80% 20%, rgba(124, 231, 255, 0.08), transparent 20%),
+                linear-gradient(180deg, #020403 0%, #050806 56%, #020303 100%);
+            color: #a6ffad;
+            font-family: 'Fira Code', 'JetBrains Mono', 'Courier New', monospace;
+            position: relative;
+            overflow: hidden;
+
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        body::before {
+            background:
+                repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 4px),
+                linear-gradient(180deg, rgba(0, 255, 136, 0.04), transparent 18%, transparent 82%, rgba(0, 255, 136, 0.05));
+            opacity: 0.35;
+            mix-blend-mode: screen;
+        }
+
+        body::after {
+            background:
+                radial-gradient(circle at center, transparent 45%, rgba(0, 0, 0, 0.4) 100%),
+                linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.2));
+        }
+
+
+
+        .terminal {
+
+            width: min(92vw, 420px);
+            border: 1px solid rgba(0, 255, 136, 0.35);
+            padding: 36px 32px;
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 14%),
+                linear-gradient(180deg, #070b09 0%, #0b120f 100%);
+            box-shadow:
+                0 0 0 1px rgba(0, 255, 136, 0.06),
+                0 24px 80px rgba(0, 0, 0, 0.62),
+                0 0 36px rgba(0, 255, 136, 0.12);
+            position: relative;
+            overflow: hidden;
+
+        }
+
+        .terminal::before,
+        .terminal::after {
+            content: "";
+            position: absolute;
+            width: 22px;
+            height: 22px;
+            border-color: rgba(0, 255, 136, 0.7);
+        }
+
+        .terminal::before {
+            top: 10px;
+            left: 10px;
+            border-top: 2px solid;
+            border-left: 2px solid;
+        }
+
+        .terminal::after {
+            top: 10px;
+            right: 10px;
+            border-top: 2px solid;
+            border-right: 2px solid;
+        }
+
+
+
+        .term-header {
+
+            font-size: 11px;
+            color: rgba(164, 255, 198, 0.58);
+            margin-bottom: 24px;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.1);
+            padding-bottom: 12px;
+            letter-spacing: 0.16em;
+
+        }
+
+        .frame-note {
+            position: absolute;
+            top: 14px;
+            right: 18px;
+            font-size: 10px;
+            letter-spacing: 0.18em;
+            color: rgba(124, 231, 255, 0.72);
+        }
+
+
+
+        h1 {
+
+            font-size: 18px;
+
+            letter-spacing: 3px;
+
+            margin-bottom: 28px;
+
+            color: #caffd4;
+
+        }
+
+
+
+        .flash-list {
+
+            list-style: none;
+
+            margin-bottom: 16px;
+
+        }
+
+
+
+        .flash-error {
+
+            color: #ff4444;
+
+            font-size: 13px;
+
+            margin-bottom: 6px;
+
+        }
+
+
+
+        .flash-success {
+
+            color: #a6ffad;
+
+            font-size: 13px;
+
+            margin-bottom: 6px;
+
+        }
+
+
+
+        .flash-warning {
+
+            color: #ffaa00;
+
+            font-size: 13px;
+
+            margin-bottom: 6px;
+
+        }
+
+
+
+        .field {
+
+            margin-bottom: 12px;
+
+        }
+
+
+
+        label {
+
+            display: block;
+
+            font-size: 11px;
+
+            color: rgba(160, 255, 140, 0.82);
+
+            letter-spacing: 1px;
+
+            margin-bottom: 6px;
+
+        }
+
+
+
+        input {
+
+            width: 100%;
+
+            background: rgba(0, 0, 0, 0.28);
+
+            border: 1px solid rgba(0, 255, 136, 0.12);
+
+            color: #caffd4;
+
+            font-family: 'Fira Code', 'JetBrains Mono', 'Courier New', monospace;
+
+            font-size: 14px;
+
+            padding: 10px 12px;
+
+            outline: none;
+
+            transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+
+            caret-color: #00ff88;
+
+        }
+
+        input::placeholder {
+            color: rgba(202, 255, 212, 0.38);
+        }
+
+
+
+        input:focus {
+            border-color: #00ff88;
+            background: rgba(0, 20, 12, 0.55);
+            box-shadow: 0 0 0 1px rgba(0, 255, 136, 0.2), 0 0 18px rgba(0, 255, 136, 0.12);
+        }
+
+
+
+        .btn {
+
+            width: 100%;
+
+            background: transparent;
+
+            border: 1px solid #00ff88;
+
+            color: #a6ffad;
+
+            font-family: 'Fira Code', 'JetBrains Mono', 'Courier New', monospace;
+
+            font-size: 13px;
+
+            letter-spacing: 2px;
+
+            padding: 12px;
+
+            cursor: pointer;
+
+            margin-top: 8px;
+
+            transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+
+        }
+
+
+
+        .btn:hover {
+
+            background: #00ff88;
+
+            color: #050605;
+            box-shadow: 0 0 18px rgba(0, 255, 136, 0.22);
+            transform: translateY(-1px);
+
+        }
+
+
+
+        .link-row {
+
+            margin-top: 20px;
+
+            font-size: 12px;
+
+            color: #444;
+
+            text-align: center;
+
+        }
+
+
+
+        .link-row a {
+
+            color: #a6ffad;
+
+            text-decoration: none;
+            position: relative;
+        }
+
+
+
+
+        .link-row a:hover {
+            text-decoration: none;
+            background: #00ff41;
+            color: #050605;
+            padding: 1px 6px;
+            border-radius: 2px;
+        }
+
+        .link-row a:hover::before {
+            content: '[ ';
+        }
+
+        .link-row a:hover::after {
+            content: ' ]';
+        }
+
+
+
+
+        .lang-row {
+
+            margin-top: 24px;
+
+            text-align: center;
+
+            font-size: 11px;
+
+            color: #333;
+
+        }
+
+
+
+        .lang-row a {
+
+            color: #555;
+
+            text-decoration: none;
+
+            margin: 0 6px;
+            position: relative;
+        }
+
+
+
+
+        .lang-row a:hover {
+            text-decoration: none;
+            background: #00ff41;
+            color: #050605;
+            padding: 1px 6px;
+            border-radius: 2px;
+        }
+
+        .lang-row a:hover::before {
+            content: '[ ';
+        }
+
+        .lang-row a:hover::after {
+            content: ' ]';
+        }
+    </style>
+
+</head>
+
+
+
+<body>
+
+    <div class="terminal">
+        <div class="frame-note">[ CONNECTION: SECURE ]</div>
+
+        <div class="term-header">HACKLAB_OS v2.6 // SECURE_TERMINAL // {{ curr_lang | upper }}</div>
+
+        <h1>{{ t.login_title | upper }}</h1>
+
+
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+
+        {% if messages %}
+
+        <ul class="flash-list">
+
+            {% for cat, msg in messages %}
+
+            <li class="flash-{{ cat }}">[ {{ msg }} ]</li>
+
+            {% endfor %}
+
+        </ul>
+
+        {% endif %}
+
+        {% endwith %}
+
+
+
+        <form method="POST">
+
+            <div class="field">
+
+                <label>{{ t.username_label | upper }} ></label>
+
+                <input type="text" name="username" autocomplete="username" required autofocus>
+
+            </div>
+
+            <div class="field">
+
+                <label>{{ t.password_label | upper }} ></label>
+
+                <input type="password" name="password" autocomplete="current-password" required>
+
+            </div>
+
+            <button class="btn" type="submit">> {{ t.login_btn | upper }}</button>
+
+        </form>
+
+
+
+        <div class="link-row">
+
+            {{ t.no_account }} <a href="{{ url_for('auth.register') }}">{{ t.register_btn }}</a>
+
+        </div>
+
+
+
+        <div class="lang-row">
+
+            <a href="{{ url_for('main.set_lang', lang='ru') }}">RU</a>
+
+            <a href="{{ url_for('main.set_lang', lang='kz') }}">KZ</a>
+
+            <a href="{{ url_for('main.set_lang', lang='en') }}">EN</a>
+
+        </div>
+
+    </div>
+
+</body>
+
+
+
 </html>

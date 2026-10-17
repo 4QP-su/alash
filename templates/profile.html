@@ -1,229 +1,1418 @@
-<!DOCTYPE html>
-<html lang="ru">
-
-<head>
- <meta charset="UTF-8">
- <title>PROFILE // {{ user.username | upper }}</title>
- <style>
- * {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
- }
-
- body {
-  background: #0a0a0a;
-  color: #00ff88;
-  font-family: 'Courier New', monospace;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
- }
-
- .terminal {
-  width: 600px;
-  border: 1px solid #00ff88;
-  padding: 32px;
-  background: #0d0d0d;
-  box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
- }
-
- .term-header {
-  font-size: 11px;
-  color: #444;
-  margin-bottom: 20px;
-  border-bottom: 1px solid #1a1a1a;
-  padding-bottom: 12px;
-  display: flex;
-  justify-content: space-between;
- }
-
- .user-info {
-  display: flex;
-  gap: 24px;
-  margin-bottom: 30px;
- }
-
- .avatar-box {
-  width: 120px;
-  height: 120px;
-  border: 1px solid #333;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: #111;
-  font-size: 40px;
- }
-
- .details {
-  flex: 1;
- }
-
- h1 {
-  font-size: 22px;
-  letter-spacing: 2px;
-  margin-bottom: 8px;
-  color: #00ff88;
- }
-
- .rank-tag {
-  display: inline-block;
-  font-size: 12px;
-  padding: 2px 8px;
-  background: #00ff88;
-  color: #0a0a0a;
-  margin-bottom: 15px;
- }
-
- .stats-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  margin-bottom: 30px;
- }
-
- .stat-item {
-  border: 1px solid #1a1a1a;
-  padding: 12px;
-  background: #111;
- }
-
- .stat-label {
-  font-size: 10px;
-  color: #666;
-  text-transform: uppercase;
-  margin-bottom: 4px;
- }
-
- .stat-value {
-  font-size: 16px;
-  color: #fff;
- }
-
- .progress-container {
-  margin-bottom: 30px;
- }
-
- .progress-label {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: #666;
-  margin-bottom: 8px;
- }
-
- .progress-bar-bg {
-  width: 100%;
-  height: 12px;
-  background: #111;
-  border: 1px solid #333;
-  position: relative;
- }
-
- .progress-bar-fill {
-  height: 100%;
-  background: #00ff88;
-  transition: width 0.5s ease;
- }
-
- .btn-row {
-  display: flex;
-  gap: 12px;
- }
-
- .btn {
-  flex: 1;
-  background: transparent;
-  border: 1px solid #00ff88;
-  color: #00ff88;
-  font-family: 'Courier New', monospace;
-  font-size: 12px;
-  padding: 10px;
-  cursor: pointer;
-  text-decoration: none;
-  text-align: center;
-  transition: all 0.2s;
- }
-
- .btn:hover {
-  background: #00ff88;
-  color: #0a0a0a;
- }
-
- .btn.secondary {
-  border-color: #444;
-  color: #444;
- }
-
- .btn.secondary:hover {
-  border-color: #ff4444;
-  color: #ff4444;
-  background: transparent;
- }
- </style>
-</head>
-
-<body>
- <div class="terminal">
- <div class="term-header">
-  <span>HACKLAB_OS // USER_PROFILE</span>
-  <span>LAST_LOGIN: {{ user.last_login or 'FIRST_TIME' }}</span>
- </div>
-
- <div class="user-info">
-  <div class="avatar-box">
-  {{ rank.icon }}
-  </div>
-  <div class="details">
-  <label style="font-size: 10px; color: #444;">IDENTIFIER ></label>
-  <h1>{{ user.username | upper }}</h1>
-  <div class="rank-tag">{{ rank.name | upper }}</div>
-  <div style="font-size: 12px; color: #666;">
-   EMAIL: {{ user.email }}<br>
-   MEMBER_SINCE: {{ user.created_at[:10] }}
-  </div>
-  </div>
- </div>
-
- <div class="stats-grid">
-  <div class="stat-item">
-  <div class="stat-label">Wallet Balance</div>
-  <div class="stat-value text-green">$ {{ user.balance }}</div>
-  </div>
-  <div class="stat-item">
-  <div class="stat-label">Experience Points</div>
-  <div class="stat-value">{{ user.xp }} XP</div>
-  </div>
-  <div class="stat-item">
-  <div class="stat-label">Levels Completed</div>
-  <div class="stat-value">{{ stats.total_completed }}</div>
-  </div>
-  <div class="stat-item">
-  <div class="stat-label">Total Attempts</div>
-  <div class="stat-value">{{ stats.total_attempts }}</div>
-  </div>
- </div>
-
- <div class="progress-container">
-  <div class="progress-label">
-  <span>NEXT_RANK_PROGRESS</span>
-  <span>{{ rank.progress_pct }}%</span>
-  </div>
-  <div class="progress-bar-bg">
-  <div class="progress-bar-fill" style="width: {{ rank.progress_pct }}%;"></div>
-  </div>
-  <div style="font-size: 10px; color: #444; margin-top: 6px; text-align: right;">
-  NEXT_LEVEL_AT: {{ rank.next_xp or 'MAX_LEVEL' }} XP
-  </div>
- </div>
-
- <div class="btn-row">
-  <a href="{{ url_for('main.index') }}" class="btn">> RETURN_TO_DASHBOARD</a>
-  <a href="{{ url_for('auth.logout') }}" class="btn secondary">[ LOGOUT ]</a>
- </div>
- </div>
-</body>
-
+﻿<!DOCTYPE html>
+<html lang="{{ curr_lang }}">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ t.profile_window_title }} // {{ user.username | upper }}</title>
+    <style>
+        :root {
+            --bg: #020403;
+            --grid: rgba(0, 255, 136, 0.07);
+            --grid-strong: rgba(0, 255, 136, 0.12);
+            --panel: rgba(4, 12, 8, 0.92);
+            --panel-deep: rgba(2, 8, 6, 0.98);
+            --line: rgba(0, 255, 136, 0.18);
+            --line-strong: rgba(0, 255, 136, 0.32);
+            --text: #d8ffe1;
+            --muted: rgba(208, 244, 217, 0.68);
+            --cyan: #6de7ff;
+            --green: #00ff88;
+            --yellow: #ffd84b;
+            --red: #ff5d5d;
+            --shadow: 0 28px 80px rgba(0, 0, 0, 0.62);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            min-height: 100vh;
+            background:
+                radial-gradient(circle at 50% 15%, rgba(0, 255, 136, 0.12), transparent 22%),
+                radial-gradient(circle at 82% 14%, rgba(109, 231, 255, 0.09), transparent 18%),
+                linear-gradient(180deg, #020403 0%, #040806 50%, #020303 100%);
+            color: var(--text);
+            font-family: 'JetBrains Mono', 'Fira Code', 'SFMono-Regular', Consolas, monospace;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before,
+        body::after {
+            content: "";
+            position: fixed;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        body::before {
+            background:
+                linear-gradient(90deg, var(--grid) 1px, transparent 1px),
+                linear-gradient(var(--grid) 1px, transparent 1px);
+            background-size: 34px 34px;
+            opacity: 0.9;
+            mask-image: radial-gradient(circle at 50% 35%, rgba(0, 0, 0, 1) 36%, rgba(0, 0, 0, 0.35) 70%, transparent 100%);
+        }
+
+        body::after {
+            background:
+                radial-gradient(circle at center, transparent 48%, rgba(0, 0, 0, 0.44) 100%),
+                linear-gradient(180deg, rgba(0, 0, 0, 0.06), rgba(0, 0, 0, 0.2));
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .app-shell {
+            position: relative;
+            z-index: 1;
+            min-height: 100vh;
+            padding: 18px;
+        }
+
+        .browser-window {
+            max-width: 1600px;
+            min-height: calc(100vh - 36px);
+            margin: 0 auto;
+            border: 1px solid rgba(0, 255, 136, 0.22);
+            background: rgba(0, 0, 0, 0.42);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            position: relative;
+        }
+
+        .browser-chrome {
+            height: 56px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 0 14px;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.12);
+            background: linear-gradient(180deg, rgba(8, 12, 10, 0.98), rgba(4, 8, 6, 0.98));
+        }
+
+        .back-btn {
+            height: 32px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 12px;
+            border: 1px solid rgba(0, 255, 136, 0.16);
+            background: rgba(0, 0, 0, 0.36);
+            color: #dfffee;
+            font-size: 11px;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            white-space: nowrap;
+            transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .back-btn:hover {
+            background: #00ff88;
+            color: #020403;
+            box-shadow: 0 0 18px rgba(0, 255, 136, 0.18);
+        }
+
+        .win-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .win-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        .win-dot.red {
+            background: #ff5b5b;
+        }
+
+        .win-dot.yellow {
+            background: #ffcb45;
+        }
+
+        .win-dot.green {
+            background: #2dff77;
+        }
+
+        .browser-tabs {
+            display: flex;
+            gap: 6px;
+            margin-left: 10px;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+        }
+
+        .browser-tab {
+            padding: 10px 14px;
+            border-radius: 8px 8px 0 0;
+            font-size: 11px;
+            letter-spacing: 0.08em;
+            color: rgba(232, 248, 236, 0.62);
+            border: 1px solid rgba(0, 255, 136, 0.08);
+            border-bottom: none;
+            background: rgba(0, 0, 0, 0.28);
+            white-space: nowrap;
+        }
+
+        .browser-tab.active {
+            color: #dfffee;
+            background: rgba(0, 255, 136, 0.06);
+            box-shadow: inset 0 1px 0 rgba(0, 255, 136, 0.12);
+        }
+
+        .address-bar {
+            flex: 0 0 280px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            padding: 0 12px;
+            border: 1px solid rgba(0, 255, 136, 0.12);
+            border-radius: 999px;
+            background: rgba(0, 0, 0, 0.36);
+            color: rgba(216, 255, 225, 0.86);
+            font-size: 12px;
+            letter-spacing: 0.06em;
+        }
+
+        .profile-stage {
+            position: relative;
+            min-height: calc(100vh - 92px);
+            padding: 36px 28px 30px;
+            overflow: hidden;
+        }
+
+        .dashboard-backdrop {
+            position: absolute;
+            inset: 0;
+            padding: 24px;
+            opacity: 0.14;
+            filter: none;
+            pointer-events: none;
+        }
+
+        .dashboard-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 16px;
+            margin-bottom: 26px;
+        }
+
+        .dashboard-title {
+            font-size: clamp(2rem, 3.8vw, 3.6rem);
+            letter-spacing: 0.08em;
+            color: #f5fff7;
+            text-shadow: 0 0 28px rgba(0, 255, 136, 0.18);
+        }
+
+        .dashboard-meta {
+            margin-top: 8px;
+            color: var(--green);
+            font-size: 12px;
+            letter-spacing: 0.16em;
+        }
+
+        .dashboard-stats {
+            display: grid;
+            grid-template-columns: repeat(4, minmax(0, 1fr));
+            gap: 14px;
+            margin-bottom: 18px;
+        }
+
+        .dash-stat {
+            border: 1px solid rgba(0, 255, 136, 0.16);
+            background: rgba(0, 0, 0, 0.32);
+            padding: 18px;
+            min-height: 92px;
+        }
+
+        .dash-stat-label {
+            font-size: 10px;
+            color: rgba(220, 244, 223, 0.55);
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+        }
+
+        .dash-stat-value {
+            margin-top: 10px;
+            font-size: 1.4rem;
+            color: #fff;
+            font-weight: 800;
+        }
+
+        .dash-announce {
+            padding: 16px 18px;
+            border: 1px solid rgba(0, 255, 136, 0.16);
+            background: rgba(0, 0, 0, 0.32);
+            color: rgba(225, 249, 231, 0.82);
+            margin-bottom: 20px;
+            letter-spacing: 0.04em;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1.1fr 1.1fr 1fr;
+            gap: 18px;
+        }
+
+        .dash-card {
+            min-height: 200px;
+            padding: 20px;
+            border: 1px solid rgba(0, 255, 136, 0.14);
+            background: rgba(0, 0, 0, 0.34);
+        }
+
+        .dash-card h3 {
+            font-size: 1rem;
+            color: #fff;
+            letter-spacing: 0.16em;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .dash-card p {
+            color: rgba(220, 244, 223, 0.64);
+            font-size: 0.88rem;
+            line-height: 1.7;
+        }
+
+        .dash-mini-list {
+            display: grid;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .dash-mini-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 0.82rem;
+            color: rgba(232, 248, 236, 0.82);
+        }
+
+        .dash-mini-row span:last-child {
+            color: var(--cyan);
+        }
+
+        .server-panel {
+            height: 160px;
+            border: 1px solid rgba(0, 255, 136, 0.16);
+            background:
+                linear-gradient(180deg, rgba(10, 20, 14, 0.92), rgba(0, 0, 0, 0.42));
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            overflow: hidden;
+        }
+
+        .server-topline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            font-size: 10px;
+            letter-spacing: 0.16em;
+            color: rgba(220, 244, 223, 0.64);
+        }
+
+        .server-badge {
+            padding: 4px 8px;
+            border: 1px solid rgba(0, 255, 136, 0.22);
+            color: #00ff88;
+            background: rgba(0, 255, 136, 0.04);
+        }
+
+        .server-bars {
+            display: grid;
+            gap: 8px;
+            flex: 1;
+            align-content: center;
+        }
+
+        .server-bar {
+            height: 24px;
+            border: 1px solid rgba(0, 255, 136, 0.16);
+            background: rgba(0, 0, 0, 0.34);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .server-bar::before {
+            content: "";
+            position: absolute;
+            inset: 0;
+            width: var(--fill, 60%);
+            background: linear-gradient(90deg, rgba(0, 255, 136, 0.22), rgba(109, 231, 255, 0.12));
+        }
+
+        .server-bar::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            border-left: 6px solid rgba(0, 255, 136, 0.45);
+            opacity: 0.9;
+        }
+
+        .server-footer {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            font-size: 10px;
+            color: rgba(232, 248, 236, 0.7);
+            letter-spacing: 0.12em;
+        }
+
+        .modal-wrap {
+            position: relative;
+            max-width: 1120px;
+            margin: 0 auto;
+            display: grid;
+            place-items: center;
+            min-height: calc(100vh - 92px);
+        }
+
+        .modal {
+            width: min(100%, 1060px);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.04), transparent 12%),
+                linear-gradient(180deg, rgba(3, 12, 8, 0.98), rgba(1, 6, 4, 0.98));
+            border: 1px solid rgba(0, 255, 136, 0.42);
+            box-shadow:
+                0 0 0 1px rgba(0, 255, 136, 0.06),
+                0 0 24px rgba(0, 255, 136, 0.12),
+                0 20px 48px rgba(0, 0, 0, 0.66);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .modal::before,
+        .modal::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .modal::before {
+            background:
+                linear-gradient(90deg, transparent 0 40px, rgba(0, 255, 136, 0.08) 40px 41px, transparent 41px calc(100% - 41px), rgba(0, 255, 136, 0.08) calc(100% - 41px) calc(100% - 40px), transparent calc(100% - 40px) 100%),
+                linear-gradient(180deg, transparent 0 40px, rgba(0, 255, 136, 0.08) 40px 41px, transparent 41px calc(100% - 41px), rgba(0, 255, 136, 0.08) calc(100% - 41px) calc(100% - 40px), transparent calc(100% - 40px) 100%);
+            opacity: 0.9;
+        }
+
+        .modal::after {
+            background:
+                radial-gradient(circle at 50% 0%, rgba(0, 255, 136, 0.08), transparent 30%);
+            opacity: 0.18;
+        }
+
+        .modal-head {
+            padding: 24px 28px 18px;
+            border-bottom: 1px solid rgba(0, 255, 136, 0.12);
+            position: relative;
+            z-index: 1;
+        }
+
+        .modal-title {
+            font-size: clamp(1.6rem, 2.8vw, 2.6rem);
+            letter-spacing: 0.18em;
+            color: #f4fff7;
+            text-shadow: 0 0 26px rgba(0, 255, 136, 0.22);
+        }
+
+        .modal-subtitle {
+            margin-top: 8px;
+            color: var(--green);
+            font-size: 0.78rem;
+            letter-spacing: 0.28em;
+            text-transform: uppercase;
+        }
+
+        .modal-body {
+            position: relative;
+            z-index: 1;
+            padding: 22px 32px 24px;
+            display: grid;
+            grid-template-columns: 156px minmax(0, 1fr);
+            column-gap: 36px;
+            row-gap: 20px;
+            align-items: start;
+        }
+
+        .avatar-col {
+            display: grid;
+            gap: 12px;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .avatar-preview-card {
+            position: relative;
+            border: 1px solid rgba(0, 255, 136, 0.16);
+            background: rgba(0, 0, 0, 0.34);
+            padding: 8px;
+            display: grid;
+            gap: 8px;
+            justify-items: center;
+            width: 100%;
+            min-width: 0;
+        }
+
+        .avatar-preview-stage {
+            position: relative;
+            border: 1px solid rgba(0, 255, 136, 0.18);
+            background:
+                linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+                rgba(7, 10, 8, 0.82);
+            background-size: 8px 8px, 8px 8px, auto;
+            box-shadow: inset 0 0 14px rgba(0, 255, 136, 0.04);
+            overflow: hidden;
+            width: 108px;
+            height: 108px;
+        }
+
+        .avatar-preview-stage::before,
+        .avatar-preview-stage::after {
+            content: "";
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            border-color: rgba(0, 255, 136, 0.65);
+        }
+
+        .avatar-preview-stage::before {
+            top: 8px;
+            left: 8px;
+            border-top: 2px solid;
+            border-left: 2px solid;
+        }
+
+        .avatar-preview-stage::after {
+            top: 8px;
+            right: 8px;
+            border-top: 2px solid;
+            border-right: 2px solid;
+        }
+
+        .avatar-open-btn {
+            width: 100%;
+            border: 0;
+            padding: 0;
+            background: transparent;
+            color: inherit;
+            cursor: pointer;
+            text-align: left;
+            display: grid;
+            gap: 8px;
+            justify-items: center;
+            position: relative;
+        }
+
+        .avatar-preview-canvas {
+            width: 108px;
+            height: 108px;
+            image-rendering: pixelated;
+            display: block;
+            background: transparent;
+        }
+
+        .avatar-open-icon {
+            position: absolute;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+            width: 36px;
+            height: 36px;
+            display: grid;
+            place-items: center;
+            border: 1px solid rgba(0, 255, 136, 0.26);
+            background: rgba(0, 0, 0, 0.42);
+            color: #dfffee;
+            font-size: 18px;
+            line-height: 1;
+            text-shadow: 0 0 10px rgba(0, 255, 136, 0.4);
+            box-shadow: 0 0 18px rgba(0, 255, 136, 0.12);
+            pointer-events: none;
+            transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+        }
+
+        .avatar-open-btn:hover .avatar-open-icon {
+            background: #00ff88;
+            color: #020403;
+            box-shadow: 0 0 22px rgba(0, 255, 136, 0.24);
+            transform: translate(-50%, -50%) scale(1.05);
+        }
+
+        .avatar-editor {
+            position: absolute;
+            inset: 0;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 18px;
+            background: rgba(0, 0, 0, 0.62);
+            z-index: 4;
+        }
+
+        .avatar-editor.open {
+            display: flex;
+        }
+
+        .avatar-editor-panel {
+            width: min(340px, 100%);
+            border: 1px solid rgba(0, 255, 136, 0.26);
+            background: linear-gradient(180deg, rgba(4, 10, 6, 0.98), rgba(0, 0, 0, 0.96));
+            box-shadow: 0 0 32px rgba(0, 255, 136, 0.12), 0 24px 54px rgba(0, 0, 0, 0.66);
+            padding: 12px;
+            display: grid;
+            gap: 14px;
+        }
+
+        .avatar-editor-head {
+            display: flex;
+            justify-content: space-between;
+            gap: 16px;
+            align-items: flex-start;
+        }
+
+        .avatar-editor-title {
+            font-size: 1rem;
+            letter-spacing: 0.18em;
+            color: #fff;
+            text-transform: uppercase;
+        }
+
+        .avatar-editor-subtitle {
+            margin-top: 8px;
+            color: var(--green);
+            font-size: 0.76rem;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .avatar-editor-close {
+            width: 34px;
+            height: 34px;
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            background: rgba(0, 255, 136, 0.06);
+            color: #dfffee;
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+
+        .avatar-editor-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        .avatar-canvas {
+            display: block;
+            width: min(100%, 210px);
+            height: min(100%, 210px);
+            aspect-ratio: 1 / 1;
+            margin: 0 auto;
+            image-rendering: pixelated;
+            background: rgba(7, 10, 8, 0.82);
+            border: 1px solid rgba(0, 255, 136, 0.18);
+            box-shadow: inset 0 0 20px rgba(0, 255, 136, 0.04);
+            cursor: crosshair;
+            touch-action: none;
+        }
+
+        .avatar-toolbar {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .brush-control {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 7px;
+            border: 1px solid rgba(0, 255, 136, 0.16);
+            background: rgba(0, 0, 0, 0.36);
+        }
+
+        .brush-btn {
+            width: 28px;
+            height: 28px;
+            border: 1px solid rgba(0, 255, 136, 0.18);
+            background: rgba(0, 255, 136, 0.06);
+            color: #dfffee;
+            cursor: pointer;
+            font-size: 16px;
+            line-height: 1;
+        }
+
+        .brush-size {
+            min-width: 26px;
+            text-align: center;
+            color: var(--green);
+            font-size: 12px;
+            letter-spacing: 0.12em;
+        }
+
+        .tool-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .tool-chip {
+            width: 28px;
+            height: 28px;
+            border: 1px solid rgba(0, 255, 136, 0.18);
+            background: rgba(0, 0, 0, 0.45);
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(0, 255, 136, 0.06);
+        }
+
+        .tool-chip.active {
+            outline: 2px solid rgba(0, 255, 136, 0.8);
+            outline-offset: 2px;
+        }
+
+        .tool-icon {
+            width: 30px;
+            height: 30px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            border: 1px solid rgba(0, 255, 136, 0.16);
+            background: rgba(0, 0, 0, 0.36);
+            color: var(--green);
+            font-size: 14px;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(0, 255, 136, 0.08);
+            padding: 0;
+        }
+
+        .tool-icon svg {
+            width: 16px;
+            height: 16px;
+            stroke: currentColor;
+            fill: none;
+            stroke-width: 1.5;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .tool-icon.active svg {
+            fill: currentColor;
+            stroke: none;
+        }
+
+        .tool-icon.active {
+            background: rgba(0, 255, 136, 0.12);
+            color: #000;
+        }
+
+        .randomize-btn {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 12px 16px;
+            border: 1px solid rgba(0, 255, 136, 0.24);
+            background: rgba(0, 255, 136, 0.05);
+            color: #dfffee;
+            letter-spacing: 0.18em;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+        }
+
+        .randomize-btn:hover {
+            background: #00ff88;
+            color: #020403;
+            box-shadow: 0 0 22px rgba(0, 255, 136, 0.2);
+        }
+
+        .brush-btn:hover {
+            background: rgba(0, 255, 136, 0.18);
+            color: #000;
+        }
+
+        .avatar-caption {
+            color: rgba(220, 244, 223, 0.64);
+            font-size: 0.82rem;
+            line-height: 1.7;
+        }
+
+        .avatar-side {
+            display: grid;
+            gap: 12px;
+            align-content: start;
+            min-width: 0;
+            padding-left: 2px;
+        }
+
+        .profile-card {
+            border: 1px solid rgba(0, 255, 136, 0.16);
+            background: rgba(0, 0, 0, 0.34);
+            padding: 12px;
+            min-width: 0;
+        }
+
+        .profile-card h3 {
+            font-size: 0.85rem;
+            letter-spacing: 0.16em;
+            color: #fff;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+        }
+
+        .profile-row {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 8px;
+            color: rgba(232, 248, 236, 0.82);
+            font-size: 0.8rem;
+            min-width: 0;
+        }
+
+        .profile-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .profile-row span:last-child {
+            color: var(--green);
+        }
+
+        .progress-wrap {
+            display: grid;
+            gap: 10px;
+        }
+
+        .progress-track {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(0, 255, 136, 0.12);
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00ff88 0%, #6de7ff 100%);
+            box-shadow: 0 0 16px rgba(0, 255, 136, 0.18);
+        }
+
+        .modal-footnote {
+            position: relative;
+            z-index: 1;
+            padding: 0 28px 28px;
+            color: rgba(208, 244, 217, 0.56);
+            font-size: 0.74rem;
+            letter-spacing: 0.06em;
+            line-height: 1.7;
+        }
+
+        .grid-hide {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .dashboard-layer {
+            transform: translateY(0);
+        }
+
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        @media (max-width: 1200px) {
+
+            .dashboard-grid,
+            .modal-body {
+                grid-template-columns: 1fr;
+            }
+
+            .dashboard-stats {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+            }
+        }
+
+        @media (max-width: 760px) {
+            .app-shell {
+                padding: 10px;
+            }
+
+            .browser-window {
+                min-height: calc(100vh - 20px);
+            }
+
+            .browser-chrome {
+                height: auto;
+                align-items: flex-start;
+                padding: 12px;
+                gap: 10px;
+                flex-wrap: wrap;
+            }
+
+            .browser-tabs {
+                order: 3;
+                width: 100%;
+                overflow-x: auto;
+                padding-bottom: 2px;
+            }
+
+            .address-bar {
+                flex: 1 1 100%;
+            }
+
+            .profile-stage {
+                padding: 18px 14px 22px;
+            }
+
+            .dashboard-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-head,
+            .modal-body,
+            .modal-footer,
+            .modal-footnote {
+                padding-left: 16px;
+                padding-right: 16px;
+            }
+
+            .avatar-toolbar {
+                grid-template-columns: 1fr;
+            }
+
+            .action-btn,
+            .action-btn.primary {
+                min-width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="app-shell">
+        <div class="browser-window">
+            <div class="browser-chrome" aria-label="Browser frame">
+                <a class="back-btn" href="{{ url_for('main.index') }}">← BACK</a>
+                <div class="win-controls" aria-hidden="true">
+                    <span class="win-dot red"></span>
+                    <span class="win-dot yellow"></span>
+                    <span class="win-dot green"></span>
+                </div>
+                <div class="browser-tabs">
+                    <div class="browser-tab">Ð’ÐµÐºÑ‚Ð¾Ñ€Ð½Ñ‹Ð¹ Ð·Ð°Ð¿Ñ€Ð¾Ñ</div>
+                    <div class="browser-tab">Problem loading</div>
+                    <div class="browser-tab">ÐžÑ†ÐµÐ½ÐºÐ° ÑÐ°Ð¹Ñ‚Ð°</div>
+                    <div class="browser-tab active">HACKER_OS | AGENT</div>
+                </div>
+                <div class="address-bar">{{ t.profile_address }}</div>
+            </div>
+
+            <div class="profile-stage">
+                <div class="dashboard-backdrop dashboard-layer" aria-hidden="true">
+                    <div class="dashboard-top">
+                        <div>
+                            <div class="dashboard-title">HACKER_OS v3</div>
+                            <div class="dashboard-meta">{{ t.profile_dashboard_note }}</div>
+                        </div>
+                        <div
+                            style="display:grid; grid-template-columns:repeat(2, minmax(140px, 1fr)); gap:14px; min-width: 320px;">
+                            <div class="dash-stat">
+                                <div class="dash-stat-label">{{ t.profile_dashboard_balance }}</div>
+                                <div class="dash-stat-value">${{ user.balance }}</div>
+                            </div>
+                            <div class="dash-stat">
+                                <div class="dash-stat-label">{{ t.profile_dashboard_xp }}</div>
+                                <div class="dash-stat-value">{{ user.xp }}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-stats">
+                        <div class="dash-stat">
+                            <div class="dash-stat-label">{{ t.profile_uptime }}</div>
+                            <div class="dash-stat-value">99.98%</div>
+                        </div>
+                        <div class="dash-stat">
+                            <div class="dash-stat-label">{{ t.profile_network }}</div>
+                            <div class="dash-stat-value">GREEN LINK</div>
+                        </div>
+                        <div class="dash-stat">
+                            <div class="dash-stat-label">{{ t.profile_dashboard_balance }}</div>
+                            <div class="dash-stat-value">${{ user.balance }}</div>
+                        </div>
+                        <div class="dash-stat">
+                            <div class="dash-stat-label">{{ t.profile_dashboard_xp }}</div>
+                            <div class="dash-stat-value">{{ user.xp }}</div>
+                        </div>
+                    </div>
+
+                    <div class="dash-announce">{{ t.profile_announcement }} :: AGENT channel is live. New avatar editors
+                        are active.</div>
+
+                    <div class="dashboard-grid">
+                        <div class="dash-card">
+                            <h3>{{ t.sql_title }}</h3>
+                            <p>{{ t.sql_desc }}</p>
+                            <div class="dash-mini-list">
+                                <div class="dash-mini-row"><span>SQL Injection</span><span>{{ module_progress.sql
+                                        }}/6</span></div>
+                                <div class="dash-mini-row"><span>Progress</span><span>{{ (module_progress.sql / 6 * 100)
+                                        | int }}%</span></div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <h3>{{ t.xss_title }}</h3>
+                            <p>{{ t.xss_desc }}</p>
+                            <div class="dash-mini-list">
+                                <div class="dash-mini-row"><span>XSS</span><span>{{ module_progress.xss }}/5</span>
+                                </div>
+                                <div class="dash-mini-row"><span>Progress</span><span>{{ (module_progress.xss / 5 * 100)
+                                        | int }}%</span></div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <h3>{{ t.csrf_title }}</h3>
+                            <p>{{ t.csrf_desc }}</p>
+                            <div class="dash-mini-list">
+                                <div class="dash-mini-row"><span>CSRF</span><span>{{ module_progress.csrf }}/3</span>
+                                </div>
+                                <div class="dash-mini-row"><span>Progress</span><span>{{ (module_progress.csrf / 3 *
+                                        100) | int }}%</span></div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <h3>{{ t.path_title }}</h3>
+                            <p>{{ t.path_desc }}</p>
+                            <div class="dash-mini-list">
+                                <div class="dash-mini-row"><span>Path</span><span>{{ module_progress.path }}/3</span>
+                                </div>
+                                <div class="dash-mini-row"><span>Progress</span><span>{{ (module_progress.path / 3 *
+                                        100) | int }}%</span></div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <h3>{{ t.auth_title }}</h3>
+                            <p>{{ t.auth_desc }}</p>
+                            <div class="dash-mini-list">
+                                <div class="dash-mini-row"><span>Auth</span><span>{{ module_progress.auth }}/3</span>
+                                </div>
+                                <div class="dash-mini-row"><span>Progress</span><span>{{ (module_progress.auth / 3 *
+                                        100) | int }}%</span></div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <h3>{{ t.achievements }}</h3>
+                            <p>{{ t.profile_dashboard_achievements }} :: active badge stream.</p>
+                            <div class="dash-mini-list">
+                                <div class="dash-mini-row"><span>Clean Runs</span><span>{{ stats.clean_completions
+                                        }}</span></div>
+                                <div class="dash-mini-row"><span>Hints Used</span><span>{{ stats.hints_bought }}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="dash-card">
+                            <h3>{{ t.profile_dashboard_server }}</h3>
+                            <div class="server-panel" aria-hidden="true">
+                                <div class="server-topline">
+                                    <span>CORE NODE</span>
+                                    <span class="server-badge">ACTIVE</span>
+                                </div>
+                                <div class="server-bars">
+                                    <div class="server-bar" style="--fill: 82%;"></div>
+                                    <div class="server-bar" style="--fill: 66%;"></div>
+                                    <div class="server-bar" style="--fill: 48%;"></div>
+                                </div>
+                                <div class="server-footer">
+                                    <span>PORT 443</span>
+                                    <span>LINK STABLE</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-wrap">
+                    <section class="modal" aria-label="Agent profile modal">
+                        <header class="modal-head">
+                            <div class="modal-title">{{ t.profile_window_title }}</div>
+                            <div class="modal-subtitle">{{ t.profile_window_subtitle }}</div>
+                        </header>
+
+                        <div class="modal-body">
+                            <div class="avatar-col">
+                                <div class="avatar-preview-card">
+                                    <button id="openEditorBtn" class="avatar-open-btn" type="button"
+                                        aria-label="AVATAR EDITOR">
+                                        <div class="avatar-preview-stage">
+                                            <canvas id="avatarPreviewCanvas" class="avatar-preview-canvas" width="256"
+                                                height="256" aria-label="Avatar preview"></canvas>
+                                        </div>
+                                        <span class="avatar-open-icon" aria-hidden="true">✎</span>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <aside class="avatar-side">
+                                <div class="profile-card">
+                                    <h3>{{ user.username | upper }}</h3>
+                                    <div class="profile-row"><span>ID</span><span>{{ user.id }}</span></div>
+                                    <div class="profile-row"><span>Balance</span><span>${{ user.balance }}</span></div>
+                                    <div class="profile-row"><span>XP</span><span>{{ user.xp }}</span></div>
+                                    <div class="profile-row"><span>Badges</span><span>{{ stats.total_completed }}</span>
+                                    </div>
+                                    <div class="profile-row"><span>Rank</span><span>{{ rank.name }}</span></div>
+                                </div>
+
+                                <div class="profile-card">
+                                    <h3>Progress</h3>
+                                    <div class="progress-wrap">
+                                        <div class="profile-row"><span>SQL</span><span>{{ module_progress.sql
+                                                }}/6</span></div>
+                                        <div class="progress-track">
+                                            <div class="progress-fill"
+                                                style="width: {{ (module_progress.sql / 6 * 100) | int }}%;"></div>
+                                        </div>
+                                        <div class="profile-row"><span>XSS</span><span>{{ module_progress.xss
+                                                }}/5</span></div>
+                                        <div class="progress-track">
+                                            <div class="progress-fill"
+                                                style="width: {{ (module_progress.xss / 5 * 100) | int }}%;"></div>
+                                        </div>
+                                        <div class="profile-row"><span>Core</span><span>{{ module_progress.auth +
+                                                module_progress.csrf + module_progress.path }}</span></div>
+                                        <div class="progress-track">
+                                            <div class="progress-fill"
+                                                style="width: {{ ((module_progress.auth + module_progress.csrf + module_progress.path) / 9 * 100) | int }}%;">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </aside>
+                        </div>
+
+                        <div class="modal-footnote">* A CUSTOM AVATAR ALLOWS FULL ACADEMY AGENT PERSONALIZATION.</div>
+
+                        <div id="avatarEditor" class="avatar-editor" aria-hidden="true">
+                            <div class="avatar-editor-panel" role="dialog" aria-label="{{ t.avatar_editor_title }}">
+                                <div class="avatar-editor-head">
+                                    <div>
+                                        <div class="avatar-editor-title">{{ t.avatar_editor_title }}</div>
+                                        <div class="avatar-editor-subtitle">{{ t.profile_avatar_click_hint }}</div>
+                                    </div>
+                                    <button id="closeEditorBtn" class="avatar-editor-close" type="button"
+                                        aria-label="Close editor">×</button>
+                                </div>
+
+                                <div class="avatar-editor-grid">
+                                    <div class="avatar-caption">{{ t.profile_avatar_note }}</div>
+                                    <canvas id="avatarCanvas" class="avatar-canvas" width="256" height="256"
+                                        aria-label="Pixel avatar canvas"></canvas>
+
+                                    <div class="avatar-toolbar">
+                                        <button id="randomizeBtn" class="randomize-btn" type="button">{{
+                                            t.profile_randomize }}</button>
+                                        <div class="brush-control" aria-label="Brush size control">
+                                            <button id="brushDownBtn" class="brush-btn" type="button"
+                                                title="Smaller brush">-</button>
+                                            <span id="brushSizeLabel" class="brush-size">1</span>
+                                            <button id="brushUpBtn" class="brush-btn" type="button"
+                                                title="Larger brush">+</button>
+                                        </div>
+                                        <div class="tool-group" aria-label="Drawing tools">
+                                            <button class="tool-icon active" type="button" data-tool="pencil"
+                                                title="Pencil">
+                                                <svg viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M3 17.25V21h3.75L17.81 9.94m-4.62-4.62L15.38 2.62c.39-.39 1.02-.39 1.41 0l2.97 2.97c.39.39.39 1.02 0 1.41L12.77 7.59m-4.62-4.62l4.62 4.62" />
+                                                </svg>
+                                            </button>
+                                            <button class="tool-icon" type="button" data-tool="eraser" title="Eraser">
+                                                <svg viewBox="0 0 24 24">
+                                                    <path
+                                                        d="M9 11H7v2h2v-2zm4-7H8.17L4.59 11.59c-.39.39-.39 1.02 0 1.41L11.17 21h6.66c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm-2 11h-2v-2h2v2zm4 0h-2v-2h2v2z" />
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <div class="tool-group" aria-label="Palette">
+                                            <button class="tool-chip active" type="button" data-color="#00ff88"
+                                                style="background:#00ff88" title="Green"></button>
+                                            <button class="tool-chip" type="button" data-color="#6de7ff"
+                                                style="background:#6de7ff" title="Cyan"></button>
+                                            <button class="tool-chip" type="button" data-color="#ffd84b"
+                                                style="background:#ffd84b" title="Yellow"></button>
+                                            <button class="tool-chip" type="button" data-color="#ff5d5d"
+                                                style="background:#ff5d5d" title="Red"></button>
+                                            <button class="tool-chip" type="button" data-color="#b366ff"
+                                                style="background:#b366ff" title="Purple"></button>
+                                            <button class="tool-chip" type="button" data-color="#ff66cc"
+                                                style="background:#ff66cc" title="Pink"></button>
+                                            <button class="tool-chip" type="button" data-color="#00ffcc"
+                                                style="background:#00ffcc" title="Turquoise"></button>
+                                            <button class="tool-chip" type="button" data-color="#ff8844"
+                                                style="background:#ff8844" title="Orange"></button>
+                                            <button class="tool-chip" type="button" data-color="#ffffff"
+                                                style="background:#ffffff;" title="White"></button>
+                                            <button class="tool-chip" type="button" data-color="#8c8c8c"
+                                                style="background:#8c8c8c" title="Grey"></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const previewCanvas = document.getElementById('avatarPreviewCanvas');
+            const previewCtx = previewCanvas.getContext('2d');
+            const editorCanvas = document.getElementById('avatarCanvas');
+            const ctx = editorCanvas.getContext('2d');
+            const editorModal = document.getElementById('avatarEditor');
+            const openEditorBtn = document.getElementById('openEditorBtn');
+            const closeEditorBtn = document.getElementById('closeEditorBtn');
+            const brushSizeLabel = document.getElementById('brushSizeLabel');
+            const cellSize = 8;
+            const cols = editorCanvas.width / cellSize;
+            const rows = editorCanvas.height / cellSize;
+            const storageKey = `hacklab_avatar_{{ user.id | tojson | safe }}`;
+
+            let tool = 'pencil';
+            let color = '#00ff88';
+            let brushSize = 1;
+            let drawing = false;
+            let saveQueued = false;
+
+            function drawGrid(targetCtx, width, height) {
+                targetCtx.strokeStyle = 'rgba(0, 255, 136, 0.08)';
+                for (let x = 0; x <= width / cellSize; x++) {
+                    targetCtx.beginPath();
+                    targetCtx.moveTo(x * cellSize + 0.5, 0);
+                    targetCtx.lineTo(x * cellSize + 0.5, height);
+                    targetCtx.stroke();
+                }
+                for (let y = 0; y <= height / cellSize; y++) {
+                    targetCtx.beginPath();
+                    targetCtx.moveTo(0, y * cellSize + 0.5);
+                    targetCtx.lineTo(width, y * cellSize + 0.5);
+                    targetCtx.stroke();
+                }
+            }
+
+            function clearEditor() {
+                ctx.fillStyle = '#07100b';
+                ctx.fillRect(0, 0, editorCanvas.width, editorCanvas.height);
+                drawGrid(ctx, editorCanvas.width, editorCanvas.height);
+            }
+
+            function syncPreview() {
+                previewCtx.clearRect(0, 0, previewCanvas.width, previewCanvas.height);
+                previewCtx.imageSmoothingEnabled = false;
+                previewCtx.drawImage(editorCanvas, 0, 0, previewCanvas.width, previewCanvas.height);
+            }
+
+            function drawCell(x, y, fill) {
+                if (x < 0 || y < 0 || x >= cols || y >= rows) return;
+                ctx.fillStyle = fill;
+                ctx.fillRect(x * cellSize, y * cellSize, cellSize, cellSize);
+            }
+
+            function drawBrush(x, y, fill) {
+                const radius = Math.max(0, brushSize - 1);
+                for (let dx = -radius; dx <= radius; dx++) {
+                    for (let dy = -radius; dy <= radius; dy++) {
+                        drawCell(x + dx, y + dy, fill);
+                    }
+                }
+            }
+
+            function rand(min, max) {
+                return Math.floor(Math.random() * (max - min + 1)) + min;
+            }
+
+            function saveAvatar() {
+                try {
+                    localStorage.setItem(storageKey, editorCanvas.toDataURL('image/png'));
+                } catch (err) {
+                    // Ignore storage failures in private mode.
+                }
+                saveQueued = false;
+                syncPreview();
+            }
+
+            function queueSaveAvatar() {
+                if (saveQueued) return;
+                saveQueued = true;
+                requestAnimationFrame(() => {
+                    if (!drawing) {
+                        saveAvatar();
+                    } else {
+                        saveQueued = false;
+                    }
+                });
+            }
+
+            function loadAvatar() {
+                const saved = localStorage.getItem(storageKey);
+                if (!saved) {
+                    clearEditor();
+                    syncPreview();
+                    return;
+                }
+                const img = new Image();
+                img.onload = () => {
+                    clearEditor();
+                    ctx.drawImage(img, 0, 0, editorCanvas.width, editorCanvas.height);
+                    syncPreview();
+                };
+                img.src = saved;
+            }
+
+            function randomizeAvatar() {
+                clearEditor();
+                const palette = ['#00ff88', '#6de7ff', '#ffd84b', '#ff5d5d', '#b366ff', '#ff66cc', '#00ffcc', '#ff8844', '#ffffff', '#8c8c8c'];
+                for (let i = 0; i < 220; i++) {
+                    const px = rand(0, cols - 1);
+                    const py = rand(0, rows - 1);
+                    const pick = palette[rand(0, palette.length - 1)];
+                    drawCell(px, py, pick);
+                }
+                ctx.fillStyle = '#050605';
+                ctx.fillRect(0, 0, editorCanvas.width, 32);
+                ctx.fillRect(0, editorCanvas.height - 32, editorCanvas.width, 32);
+                saveAvatar();
+            }
+
+            function pointerToCell(ev) {
+                const rect = editorCanvas.getBoundingClientRect();
+                const scaleX = editorCanvas.width / rect.width;
+                const scaleY = editorCanvas.height / rect.height;
+                const px = (ev.clientX - rect.left) * scaleX;
+                const py = (ev.clientY - rect.top) * scaleY;
+                return {
+                    x: Math.floor(px / cellSize),
+                    y: Math.floor(py / cellSize),
+                };
+            }
+
+            function paintFromEvent(ev) {
+                const { x, y } = pointerToCell(ev);
+                if (tool === 'eraser') {
+                    drawBrush(x, y, '#07100b');
+                } else {
+                    drawBrush(x, y, color);
+                }
+                queueSaveAvatar();
+            }
+
+            function openEditor() {
+                editorModal.classList.add('open');
+                editorModal.setAttribute('aria-hidden', 'false');
+                loadAvatar();
+            }
+
+            function closeEditor() {
+                drawing = false;
+                saveAvatar();
+                editorModal.classList.remove('open');
+                editorModal.setAttribute('aria-hidden', 'true');
+            }
+
+            editorCanvas.addEventListener('pointerdown', (ev) => {
+                drawing = true;
+                editorCanvas.setPointerCapture(ev.pointerId);
+                paintFromEvent(ev);
+            });
+            editorCanvas.addEventListener('pointermove', (ev) => {
+                if (!drawing) return;
+                paintFromEvent(ev);
+            });
+            editorCanvas.addEventListener('pointerup', () => {
+                drawing = false;
+                saveAvatar();
+            });
+            editorCanvas.addEventListener('pointerleave', () => {
+                drawing = false;
+                saveAvatar();
+            });
+
+            document.querySelectorAll('[data-color]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    color = btn.dataset.color;
+                    tool = 'pencil';
+                    document.querySelectorAll('.tool-chip').forEach((el) => el.classList.remove('active'));
+                    btn.classList.add('active');
+                    document.querySelectorAll('[data-tool]').forEach((el) => el.classList.remove('active'));
+                    document.querySelector('[data-tool="pencil"]').classList.add('active');
+                });
+            });
+
+            document.querySelectorAll('[data-tool]').forEach((btn) => {
+                btn.addEventListener('click', () => {
+                    tool = btn.dataset.tool;
+                    document.querySelectorAll('[data-tool]').forEach((el) => el.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+
+            function updateBrushSize(delta) {
+                brushSize = Math.min(4, Math.max(1, brushSize + delta));
+                brushSizeLabel.textContent = String(brushSize);
+            }
+
+            openEditorBtn.addEventListener('click', openEditor);
+            previewCanvas.addEventListener('click', openEditor);
+            closeEditorBtn.addEventListener('click', closeEditor);
+            editorModal.addEventListener('click', (ev) => {
+                if (ev.target === editorModal) closeEditor();
+            });
+            document.getElementById('brushDownBtn').addEventListener('click', () => updateBrushSize(-1));
+            document.getElementById('brushUpBtn').addEventListener('click', () => updateBrushSize(1));
+            document.getElementById('randomizeBtn').addEventListener('click', randomizeAvatar);
+
+            brushSizeLabel.textContent = String(brushSize);
+            clearEditor();
+            syncPreview();
+            loadAvatar();
+        });
+    </script>
+</body>
+
 </html>

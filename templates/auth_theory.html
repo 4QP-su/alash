@@ -290,13 +290,6 @@
       cursor: pointer;
       font-family: inherit;
       font-weight: bold;
-      border-radius: 6px;
-      transition: 0.3s;
-    }
-
-    .btn-hack:hover {
-      background: #00ffff;
-      box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
     }
   </style>
 </head>
@@ -310,6 +303,22 @@
     <div class="panel-header">THEORY</div>
     <div class="split-layout{% if show_quiz and not error %} quiz-mode{% endif %}">
       <div class="panel">
+        <!-- Simple Theory for Beginners -->
+        <section class="simple-theory">
+          <h3> {{ t.simple_theory_title | default('IN SIMPLE WORDS') }}</h3>
+          <p>
+            {% if level == 1 %}
+            {{ t.auth_level1_simple_theory }}
+            {% elif level == 2 %}
+            {{ t.auth_level2_simple_theory }}
+            {% elif level == 3 %}
+            {{ t.auth_level3_simple_theory }}
+            {% else %}
+            {{ t.auth_level1_simple_theory }}
+            {% endif %}
+          </p>
+        </section>
+
         <div class="theory-box">
           <strong style="color: var(--primary-cyan);">{{ t.auth_theory_p1 }}</strong>
         </div>

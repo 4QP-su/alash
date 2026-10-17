@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>VERIFY TELEGRAM // HACKLAB</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(0, 255, 136, 0.12), transparent 24%),
+        radial-gradient(circle at 80% 20%, rgba(124, 231, 255, 0.08), transparent 20%),
+        linear-gradient(180deg, #020403 0%, #050806 56%, #020303 100%);
+      color: #00ff88;
+      font-family: 'Courier New', monospace;
+      position: relative;
+      overflow: hidden;
+    }
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+    }
+    body::before {
+      background:
+        repeating-linear-gradient(180deg, rgba(255, 255, 255, 0.02) 0 1px, transparent 1px 4px),
+        linear-gradient(180deg, rgba(0, 255, 136, 0.04), transparent 18%, transparent 82%, rgba(0, 255, 136, 0.05));
+      opacity: 0.35;
+      mix-blend-mode: screen;
+    }
+    body::after {
+      background:
+        radial-gradient(circle at center, transparent 45%, rgba(0, 0, 0, 0.4) 100%),
+        linear-gradient(180deg, rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.2));
+    }
+    .terminal {
+      width: min(92vw, 420px);
+      border: 1px solid rgba(0, 255, 136, 0.35);
+      padding: 36px 32px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 14%),
+        linear-gradient(180deg, #070b09 0%, #0b120f 100%);
+      box-shadow:
+        0 0 0 1px rgba(0, 255, 136, 0.06),
+        0 24px 80px rgba(0, 0, 0, 0.62),
+        0 0 36px rgba(0, 255, 136, 0.12);
+      position: relative;
+      overflow: hidden;
+    }
+    .terminal::before,
+    .terminal::after {
+      content: "";
+      position: absolute;
+      width: 22px;
+      height: 22px;
+      border-color: rgba(0, 255, 136, 0.7);
+    }
+    .terminal::before {
+      top: 10px;
+      left: 10px;
+      border-top: 2px solid;
+      border-left: 2px solid;
+    }
+    .terminal::after {
+      top: 10px;
+      right: 10px;
+      border-top: 2px solid;
+      border-right: 2px solid;
+    }
+    .term-header { font-size: 11px; color: rgba(164, 255, 198, 0.58); margin-bottom: 24px; border-bottom: 1px solid rgba(0, 255, 136, 0.1); padding-bottom: 12px; letter-spacing: 0.16em; }
+    .frame-note { position: absolute; top: 14px; right: 18px; font-size: 10px; letter-spacing: 0.18em; color: rgba(124, 231, 255, 0.72); }
+    h1 { font-size: 18px; letter-spacing: 3px; margin-bottom: 8px; }
+    .subtitle { font-size: 12px; color: #555; margin-bottom: 28px; }
+    .subtitle span { color: #00ff88; }
+    .flash-list { list-style: none; margin-bottom: 16px; }
+    .flash-error   { color: #ff4444; font-size: 13px; margin-bottom: 6px; }
+    .flash-success { color: #00ff88; font-size: 13px; margin-bottom: 6px; }
+    .field { margin-bottom: 16px; }
+    label { display: block; font-size: 11px; color: #666; letter-spacing: 1px; margin-bottom: 6px; }
+    input {
+      width: 100%; background: rgba(0, 0, 0, 0.28); border: 1px solid rgba(0, 255, 136, 0.12);
+      color: #caffd4;
+      font-family: 'Courier New', monospace; font-size: 24px;
+      letter-spacing: 8px; padding: 12px; outline: none;
+      text-align: center; caret-color: #00ff88;
+      transition: border-color 0.2s, box-shadow 0.2s, background 0.2s;
+    }
+    input::placeholder { color: rgba(202, 255, 212, 0.36); }
+    input:focus { border-color: #00ff88; background: rgba(0, 20, 12, 0.55); box-shadow: 0 0 0 1px rgba(0, 255, 136, 0.2), 0 0 18px rgba(0, 255, 136, 0.12); }
+    .btn {
+      width: 100%; background: transparent; border: 1px solid #00ff88;
+      color: #00ff88; font-family: 'Courier New', monospace;
+      font-size: 13px; letter-spacing: 2px; padding: 12px;
+      cursor: pointer; margin-top: 8px; transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+    }
+    .btn:hover { background: #00ff88; color: #050605; box-shadow: 0 0 18px rgba(0, 255, 136, 0.22); transform: translateY(-1px); }
+    .btn-ghost {
+      width: 100%; background: transparent; border: 1px solid #333;
+      color: #6b6b6b; font-family: 'Courier New', monospace;
+      font-size: 12px; padding: 10px; cursor: pointer; margin-top: 8px;
+      transition: border-color 0.2s, color 0.2s, transform 0.2s;
+    }
+    .btn-ghost:hover { border-color: #00ff88; color: #00ff88; transform: translateY(-1px); }
+    .hint { font-size: 11px; color: #333; margin-top: 20px; text-align: center; }
+    .bot-link { 
+      font-size: 12px; color: #555; margin-bottom: 20px; text-align: center;
+      border: 1px dashed #333; padding: 12px; border-radius: 4px;
+    }
+    .bot-link a { color: #00ff88; text-decoration: none; }
+    .bot-link a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="terminal">
+    <div class="frame-note">[ CHANNEL: TELEGRAM CODE ]</div>
+    <div class="term-header">HACKLAB_OS v2.6 // TELEGRAM_VERIFICATION</div>
+    <h1>VERIFY TELEGRAM</h1>
+    <p class="subtitle">Код отправлен в Telegram <span>@{{ telegram }}</span></p>
+
+    <div class="bot-link">
+      👉 Не получил код? <a href="https://t.me/hckr_sbot" target="_blank">Открыть @hckr_sbot</a> и нажми START
+    </div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul class="flash-list">
+          {% for cat, msg in messages %}
+            <li class="flash-{{ cat }}">[ {{ msg }} ]</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <form method="POST">
+      <div class="field">
+        <label>КОД ПОДТВЕРЖДЕНИЯ ></label>
+        <input type="text" name="code" maxlength="6" 
+               autocomplete="one-time-code" autofocus
+               placeholder="000000" required>
+      </div>
+      <button class="btn" type="submit">> ПОДТВЕРДИТЬ</button>
+    </form>
+
+    <form method="POST" action="{{ url_for('auth.resend_code') }}">
+      <button class="btn-ghost" type="submit">> Отправить код повторно</button>
+    </form>
+
+    <p class="hint">// Код действителен 10 минут</p>
+  </div>
+</body>
+</html>

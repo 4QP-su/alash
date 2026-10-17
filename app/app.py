@@ -63,15 +63,23 @@ def create_app():
    'daily_bonus': DAILY_BONUS,
   }
 
+ @app.after_request
+ def set_security_headers(response):
+    # Basic recommended security headers; origin-level fallback when proxy/CDN isn't configured
+    if 'X-Frame-Options' not in response.headers:
+       response.headers['X-Frame-Options'] = 'DENY'
+    if 'Strict-Transport-Security' not in response.headers:
+       response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains; preload'
+    # Start with Report-Only CSP to avoid breaking pages; move to enforce after validation
+    if 'Content-Security-Policy' not in response.headers and 'Content-Security-Policy-Report-Only' not in response.headers:
+       response.headers['Content-Security-Policy-Report-Only'] = "default-src 'self';"
+    if 'X-Content-Type-Options' not in response.headers:
+       response.headers['X-Content-Type-Options'] = 'nosniff'
+    if 'Referrer-Policy' not in response.headers:
+       response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    if 'Permissions-Policy' not in response.headers:
+       response.headers['Permissions-Policy'] = 'geolocation=(), camera=(), microphone=()'
+    return response
+
  return app
 
-# ── Для совместимости с существующим кодом ───────────────────────
-app = create_app()
-
-if __name__ == '__main__':
- try:
-  app.run(debug=True, port=5001)
- except Exception as e:
-  print(f"Error starting app: {e}")
-  import sys
-  sys.exit(1)

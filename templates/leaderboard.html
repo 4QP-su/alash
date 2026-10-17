@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="{{ curr_lang or 'ru' }}">
+
+<head>
+  <meta charset="UTF-8">
+  <title>TERMINAL | Leaderboard</title>
+  <style>
+    :root {
+      --neon-green: #00ff41;
+      --dark-green: #004411;
+      --bg-black: #0a0a0a;
+      --gold: #ffd700;
+      --silver: #c0c0c0;
+      --bronze: #cd7f32;
+    }
+
+    body {
+      background-color: var(--bg-black);
+      color: var(--neon-green);
+      font-family: 'Courier New', monospace;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    .shop-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 215, 0, 0.05);
+      border: 1px solid rgba(255, 215, 0, 0.2);
+      padding: 10px 20px;
+      width: 100%;
+      max-width: 980px;
+      margin-bottom: 20px;
+      border-radius: 12px;
+      box-sizing: border-box;
+    }
+
+    h1 {
+      border-bottom: 1px solid var(--dark-green);
+      padding-bottom: 15px;
+      color: #fff;
+      text-transform: uppercase;
+      font-size: 1.3rem;
+      letter-spacing: 4px;
+      margin: 0 0 12px 0;
+      width: 100%;
+      max-width: 980px;
+    }
+
+    .subline {
+      width: 100%;
+      max-width: 980px;
+      margin-bottom: 30px;
+      color: #9ab89e;
+      font-size: 0.9rem;
+    }
+
+    .agent-card {
+      width: 100%;
+      max-width: 980px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      margin-bottom: 20px;
+      border: 1px solid rgba(0, 255, 65, 0.18);
+      background: rgba(0, 255, 65, 0.03);
+      box-sizing: border-box;
+    }
+
+    .agent-card__copy {
+      display: grid;
+      gap: 4px;
+    }
+
+    .agent-card__title {
+      font-size: 0.7rem;
+      color: #66a06f;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .agent-card__name {
+      font-size: 1rem;
+      color: #fff;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .agent-card__meta {
+      font-size: 0.76rem;
+      color: #9ab89e;
+    }
+
+    /* Boot terminal */
+    .lb-boot {
+      width: 100%;
+      max-width: 980px;
+      min-height: 220px;
+      margin-bottom: 24px;
+      padding: 18px 20px;
+      border: 1px solid rgba(0, 255, 65, 0.22);
+      background: rgba(0, 0, 0, 0.75);
+      box-shadow: inset 0 0 24px rgba(0, 255, 65, 0.04), 0 0 20px rgba(0, 255, 65, 0.06);
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .lb-boot__title {
+      font-size: 0.68rem;
+      color: #5a8a62;
+      letter-spacing: 0.2em;
+      margin-bottom: 12px;
+      text-transform: uppercase;
+    }
+
+    .lb-boot__log {
+      margin: 0;
+      padding: 0;
+      list-style: none;
+      font-size: 0.78rem;
+      line-height: 1.65;
+      color: #7ddf9a;
+    }
+
+    .lb-boot__log li {
+      opacity: 0;
+      transform: translateX(-6px);
+      animation: boot-line-in 0.35s ease forwards;
+    }
+
+    .lb-boot__log li.is-typing::after {
+      content: '_';
+      animation: boot-cursor 0.8s step-end infinite;
+      color: var(--neon-green);
+    }
+
+    .lb-boot__matrix {
+      margin-top: 14px;
+      height: 48px;
+      overflow: hidden;
+      font-size: 0.62rem;
+      line-height: 1.1;
+      color: rgba(0, 255, 65, 0.35);
+      letter-spacing: 0.12em;
+      white-space: pre;
+      opacity: 0.85;
+    }
+
+    @keyframes boot-line-in {
+      to {
+        opacity: 1;
+        transform: translateX(0);
+      }
+    }
+
+    @keyframes boot-cursor {
+      50% { opacity: 0; }
+    }
+
+    .lb-content {
+      width: 100%;
+      max-width: 980px;
+      opacity: 0;
+      transform: translateY(8px);
+      transition: opacity 0.5s ease, transform 0.5s ease;
+    }
+
+    .lb-content.is-visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .lb-content.is-hidden {
+      pointer-events: none;
+      position: absolute;
+      left: -9999px;
+      visibility: hidden;
+    }
+
+    .leaderboard-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 40px;
+    }
+
+    .leaderboard-table th {
+      background: rgba(0, 255, 65, 0.1);
+      border: 1px solid var(--dark-green);
+      padding: 12px;
+      text-align: left;
+      color: #fff;
+      font-size: 0.8rem;
+      text-transform: uppercase;
+    }
+
+    .leaderboard-table td {
+      border: 1px solid var(--dark-green);
+      padding: 12px;
+      color: #aaa;
+      font-size: 0.85rem;
+      vertical-align: middle;
+      transition: background 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .leaderboard-table tbody tr {
+      transition: background 0.25s ease, box-shadow 0.25s ease;
+    }
+
+    .leaderboard-table tbody tr:hover td {
+      background: rgba(0, 255, 65, 0.06);
+      box-shadow: inset 0 0 18px rgba(0, 255, 65, 0.06);
+    }
+
+    .leaderboard-table tbody tr:hover .username-link {
+      color: var(--neon-green);
+      text-shadow: 0 0 10px rgba(0, 255, 65, 0.55), 0 0 20px rgba(0, 255, 65, 0.25);
+      border-bottom-color: var(--neon-green);
+      animation: glitch-flicker 0.42s steps(2, end);
+    }
+
+    .leaderboard-table tbody tr:hover .profile-btn {
+      border-color: var(--neon-green);
+      color: #000;
+      background: rgba(0, 255, 65, 0.85);
+      box-shadow: 0 0 14px rgba(0, 255, 65, 0.45);
+    }
+
+    @keyframes glitch-flicker {
+      0% { transform: translate(0); }
+      20% { transform: translate(-1px, 1px); }
+      40% { transform: translate(1px, -1px); }
+      60% { transform: translate(-1px, 0); }
+      80% { transform: translate(1px, 1px); }
+      100% { transform: translate(0); }
+    }
+
+    .rank-1 {
+      background: rgba(255, 215, 0, 0.1);
+      border-left: 4px solid var(--gold);
+    }
+
+    .rank-2 {
+      background: rgba(192, 192, 192, 0.1);
+      border-left: 4px solid var(--silver);
+    }
+
+    .rank-3 {
+      background: rgba(205, 127, 50, 0.1);
+      border-left: 4px solid var(--bronze);
+    }
+
+    .rank-me {
+      background: rgba(0, 255, 65, 0.15);
+    }
+
+    .rank-me td:first-child {
+      box-shadow: inset 4px 0 0 var(--neon-green);
+    }
+
+    .rank-badge {
+      display: inline-block;
+      width: 30px;
+      height: 30px;
+      line-height: 30px;
+      text-align: center;
+      border-radius: 50%;
+      font-weight: bold;
+      margin-right: 10px;
+    }
+
+    .rank-1 .rank-badge {
+      background: var(--gold);
+      color: #000;
+    }
+
+    .rank-2 .rank-badge {
+      background: var(--silver);
+      color: #000;
+    }
+
+    .rank-3 .rank-badge {
+      background: var(--bronze);
+      color: #000;
+    }
+
+    .rank-other .rank-badge {
+      background: var(--dark-green);
+      color: var(--neon-green);
+    }
+
+    .player-cell {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .player-meta {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .player-meta__row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .username-link {
+      color: #fff;
+      text-decoration: none;
+      font-weight: bold;
+      border-bottom: 1px solid rgba(0, 255, 65, 0.45);
+      padding-bottom: 1px;
+      transition: color 0.2s, border-color 0.2s, text-shadow 0.2s;
+    }
+
+    .username-link:hover {
+      color: var(--neon-green);
+      border-bottom-color: var(--neon-green);
+      text-shadow: 0 0 10px rgba(0, 255, 65, 0.5);
+    }
+
+    .profile-btn {
+      display: inline-flex;
+      align-items: center;
+      padding: 3px 10px;
+      font-size: 0.58rem;
+      font-weight: bold;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      text-decoration: none;
+      color: var(--neon-green);
+      border: 1px solid rgba(0, 255, 65, 0.45);
+      background: rgba(0, 255, 65, 0.06);
+      box-shadow: 0 0 8px rgba(0, 255, 65, 0.08);
+      transition: background 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .profile-btn:hover {
+      color: #000;
+      background: var(--neon-green);
+      border-color: var(--neon-green);
+      box-shadow: 0 0 14px rgba(0, 255, 65, 0.45);
+    }
+
+    .xp-value {
+      color: var(--gold);
+      font-weight: bold;
+    }
+
+    .player-avatar,
+    .me-avatar {
+      width: 42px;
+      height: 42px;
+      display: block;
+      image-rendering: pixelated;
+      border: 1px solid rgba(0, 255, 65, 0.28);
+      background: rgba(0, 0, 0, 0.55);
+      box-shadow: 0 0 12px rgba(0, 255, 65, 0.12);
+      flex: 0 0 auto;
+    }
+
+    .me-label {
+      font-size: 0.6rem;
+      color: #66a06f;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .back {
+      color: #666;
+      text-decoration: none;
+      transition: 0.2s;
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      max-width: 980px;
+      width: 100%;
+    }
+
+    .back:hover {
+      color: var(--neon-green);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="shop-bar">
+    <div style="font-weight: bold;">
+      <span style="color: #777;">LEADERBOARD</span>
+    </div>
+  </div>
+
+  <h1>{{ t.leaderboard_title }}</h1>
+  <div class="subline">{{ t.leaderboard_subtitle }}</div>
+
+  <div class="lb-boot" id="lbBoot" aria-live="polite">
+    <div class="lb-boot__title">// SYNC_RANK_MATRIX</div>
+    <ul class="lb-boot__log" id="lbBootLog"></ul>
+    <div class="lb-boot__matrix" id="lbBootMatrix" aria-hidden="true"></div>
+  </div>
+
+  <div class="lb-content is-hidden" id="lbContent">
+    <div class="agent-card">
+      <canvas id="leaderboardHeroAvatarCanvas" class="me-avatar" width="64" height="64" aria-label="Your avatar"></canvas>
+      <div class="agent-card__copy">
+        <div class="agent-card__title">CURRENT AGENT</div>
+        <div class="agent-card__name">{{ current_user.username }}</div>
+        <div class="agent-card__meta">{{ t.leaderboard_hero_avatar_note | default('Avatar from profile editor.') }}</div>
+      </div>
+    </div>
+
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>{{ t.leaderboard_col_rank }}</th>
+          <th>{{ t.leaderboard_col_username }}</th>
+          <th>{{ t.leaderboard_col_xp }}</th>
+          <th>{{ t.leaderboard_col_balance }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in board %}
+        <tr class="rank-{{ loop.index if loop.index <= 3 else 'other' }}{% if row.is_me %} rank-me{% endif %}" data-user-id="{{ row.id }}">
+          <td>
+            <span class="rank-badge">{{ loop.index }}</span>
+          </td>
+          <td>
+            <div class="player-cell">
+              <canvas class="player-avatar" data-user-id="{{ row.id }}" data-is-me="{{ '1' if row.is_me else '0' }}" width="42" height="42" aria-hidden="true"></canvas>
+              <div class="player-meta">
+                {% if row.is_me %}
+                <span class="me-label">YOU</span>
+                {% endif %}
+                <div class="player-meta__row">
+                  <a href="{{ url_for('main.user_profile', username=row.username) }}" class="username-link" title="{{ t.user_profile_view }}: {{ row.username }}">{{ row.username }}</a>
+                  {% if not row.is_me %}
+                  <a href="{{ url_for('main.user_profile', username=row.username) }}" class="profile-btn">{{ t.user_profile_view }}</a>
+                  {% endif %}
+                </div>
+              </div>
+            </div>
+          </td>
+          <td>
+            <span class="xp-value">{{ row.xp }}</span> XP
+          </td>
+          <td>
+            ${{ row.balance }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <a href="/" class="back">← {{ t.dashboard }}</a>
+
+  <script>
+    (function () {
+      var currentUserId = {{ current_user.id | tojson }};
+      var storageKey = 'hacklab_avatar_' + currentUserId;
+
+      var bootLines = [
+        '> handshake: leaderboard_node.secure',
+        '> query: SELECT agents ORDER BY xp DESC LIMIT 10',
+        '> decrypting rank signatures...',
+        '> generating agent silhouettes...',
+        '> matrix feed online'
+      ];
+
+      function mulberry32(seed) {
+        return function () {
+          seed |= 0;
+          seed = (seed + 0x6d2b79f5) | 0;
+          var t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+          t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+          return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+        };
+      }
+
+      function drawMatrixAvatar(canvas, userId) {
+        var ctx = canvas.getContext('2d');
+        var rand = mulberry32(userId * 9973 + 17);
+        var w = canvas.width;
+        var h = canvas.height;
+        var cell = 6;
+        var cols = Math.floor(w / cell);
+        var rows = Math.floor(h / cell);
+        ctx.imageSmoothingEnabled = false;
+        ctx.fillStyle = '#040a06';
+        ctx.fillRect(0, 0, w, h);
+
+        var palette = ['#00ff41', '#00e5ff', '#1a3d24', '#0d1f12', '#8cffb3', '#2a4a32'];
+
+        for (var y = 0; y < rows; y++) {
+          for (var x = 0; x < cols; x++) {
+            var edge = x < 2 || y < 2 || x > cols - 3 || y > rows - 3;
+            var head = y < rows * 0.38 && x > cols * 0.28 && x < cols * 0.72;
+            var body = y >= rows * 0.32 && y < rows * 0.82 && x > cols * 0.22 && x < cols * 0.78;
+            var noise = rand() > 0.62;
+            if ((head || body) && !edge && (noise || rand() > 0.35)) {
+              ctx.fillStyle = palette[Math.floor(rand() * palette.length)];
+              ctx.fillRect(x * cell, y * cell, cell, cell);
+            }
+          }
+        }
+
+        for (var i = 0; i < 8; i++) {
+          if (rand() > 0.4) {
+            var gx = Math.floor(rand() * (cols - 2)) + 1;
+            var gy = Math.floor(rand() * rows);
+            ctx.fillStyle = 'rgba(0, 255, 65, 0.25)';
+            ctx.fillRect(gx * cell, gy * cell, cell * 2, cell);
+          }
+        }
+      }
+
+      function paintAvatar(canvas, userId, isMe) {
+        if (!canvas) return;
+        var ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = false;
+
+        if (isMe) {
+          var saved = null;
+          try { saved = localStorage.getItem(storageKey); } catch (e) {}
+          if (saved) {
+            var img = new Image();
+            img.onload = function () {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+              ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            };
+            img.onerror = function () { drawMatrixAvatar(canvas, userId); };
+            img.src = saved;
+            return;
+          }
+        }
+        drawMatrixAvatar(canvas, userId);
+      }
+
+      function initAvatars() {
+        document.querySelectorAll('.player-avatar').forEach(function (canvas) {
+          var uid = parseInt(canvas.getAttribute('data-user-id'), 10) || 0;
+          var isMe = canvas.getAttribute('data-is-me') === '1';
+          paintAvatar(canvas, uid, isMe);
+        });
+        ['leaderboardHeroAvatarCanvas'].forEach(function (id) {
+          var c = document.getElementById(id);
+          if (c) paintAvatar(c, currentUserId, true);
+        });
+      }
+
+      function runMatrixRain() {
+        var el = document.getElementById('lbBootMatrix');
+        if (!el) return;
+        var chars = '01アイウエオｱｲｳｴｵハック';
+        var cols = 42;
+        var rows = 4;
+        var tick = 0;
+        var timer = setInterval(function () {
+          var lines = [];
+          for (var r = 0; r < rows; r++) {
+            var line = '';
+            for (var c = 0; c < cols; c++) {
+              line += chars[Math.floor(Math.random() * chars.length)];
+            }
+            lines.push(line);
+          }
+          el.textContent = lines.join('\n');
+          tick++;
+          if (tick > 12) clearInterval(timer);
+        }, 90);
+      }
+
+      function runBootSequence(done) {
+        var log = document.getElementById('lbBootLog');
+        if (!log) {
+          done();
+          return;
+        }
+        var idx = 0;
+        runMatrixRain();
+
+        function next() {
+          if (idx >= bootLines.length) {
+            setTimeout(done, 280);
+            return;
+          }
+          var li = document.createElement('li');
+          li.textContent = bootLines[idx];
+          li.style.animationDelay = '0s';
+          if (idx === bootLines.length - 1) li.classList.add('is-typing');
+          log.appendChild(li);
+          idx++;
+          setTimeout(next, 320 + Math.random() * 180);
+        }
+        next();
+      }
+
+      function revealLeaderboard() {
+        var boot = document.getElementById('lbBoot');
+        var content = document.getElementById('lbContent');
+        if (boot) {
+          boot.style.transition = 'opacity 0.4s ease';
+          boot.style.opacity = '0';
+          setTimeout(function () {
+            boot.style.display = 'none';
+          }, 420);
+        }
+        if (content) {
+          content.classList.remove('is-hidden');
+          requestAnimationFrame(function () {
+            content.classList.add('is-visible');
+          });
+        }
+        initAvatars();
+      }
+
+      runBootSequence(revealLeaderboard);
+    })();
+  </script>
+</body>
+
+</html>

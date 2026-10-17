@@ -56,29 +56,17 @@
     /* ЛЕВАЯ ПАНЕЛЬ - теперь со скроллом, если текст длинный */
 
     .side-panel {
-
       width: 350px;
-
       background: var(--panel-bg);
-
       border-right: 1px solid var(--dim-green);
-
       display: flex;
-
       flex-direction: column;
-
       padding: 25px;
-
       box-sizing: border-box;
-
       overflow-y: auto;
-
       height: 100vh;
-
       position: sticky;
-
       top: 0;
-
     }
 
 
@@ -434,9 +422,14 @@
       <div class="mission-text">
         {{ level.situation }}
         <p style="margin-top: 15px; font-size: 0.8rem; color: #666; border-top: 1px solid #222; padding-top: 10px;">
-          [АНАЛИЗ]: Обнаружена точка входа в {{ "департамент управления персоналом" if level.id < 3
-            else "финансовый шлюз компании" }}. Используйте методы внедрения кода для получения несанкционированного
-            доступа к записям. </p>
+          {% if level.id == 1 %}{{ t.sql_context_1 }}
+          {% elif level.id == 2 %}{{ t.sql_context_2 }}
+          {% elif level.id == 3 %}{{ t.sql_context_3 }}
+          {% elif level.id == 4 %}{{ t.sql_context_4 }}
+          {% elif level.id == 5 %}{{ t.sql_context_5 }}
+          {% elif level.id == 6 %}{{ t.sql_context_6 }}
+          {% else %}{{ t.analysis_prefix }}: {{ t.analysis_entry_point_dept if level.id < 3 else t.analysis_entry_point_finance }}{% endif %}
+            </p>
       </div>
     </div>
 
@@ -464,11 +457,18 @@
             style="width: 100%; padding-right: 120px;">
 
           {% if not hint_bought and not is_already_completed %}
+          {% if current_user.balance >= hint_price %}
           <a href="{{ url_for('modules.buy_hint', category='sql', level_id=level.id) }}"
             onclick="return confirm({{ t.hint_buy_confirm | tojson }});"
             style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: var(--dim-green); border: 1px solid var(--warning-gold); color: var(--warning-gold); padding: 5px 10px; font-size: 0.7rem; text-decoration: none; border-radius: 4px;">
-            {{ t.get_hint_label.split('(')[0] }}
+            {{ t.get_hint_label.split('(')[0] }} (${{ hint_price }})
           </a>
+          {% else %}
+          <span
+            style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: #1a1a1a; border: 1px solid #333; color: #555; padding: 5px 10px; font-size: 0.7rem; border-radius: 4px; cursor: not-allowed;">
+            {{ t.get_hint_label.split('(')[0] }} (${{ hint_price }})
+          </span>
+          {% endif %}
           {% endif %}
         </div>
 
@@ -547,10 +547,14 @@
    border: 2px solid var(--primary-green);
    background: var(--deep-bg);
    color: var(--primary-green);
-   font-size: 24px;
+   font-size: 14px;
    cursor: pointer;
    box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
    transition: all 0.3s ease;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   font-weight: bold;
   " title="SQL Assistant - Ask for hints">
       <span id="chatBtnIcon">chat</span>
     </button>
@@ -627,10 +631,19 @@
     }
 
     function askForHint() {
-      addMessage('System: Getting hint for Level ' + currentLevel + '...');
+      const lang = '{{ curr_lang }}';
+      let loadingText = 'System: Getting hint for Level ' + currentLevel + '...';
+      if (lang === 'ru') loadingText = 'System: Получаем подсказку для Уровня ' + currentLevel + '...';
+      if (lang === 'kz') loadingText = 'System: ' + currentLevel + '-деңгейге кеңес алу...';
+      addMessage(loadingText);
 
-      // Send context to Gemini API for hint
-      const contextMessage = `You are helping a user with SQL Injection Level ${currentLevel}. Provide a helpful hint without giving away the complete solution. Focus on the technique they should use for this level.`;
+      // Send context to API for hint in user's language
+      let contextMessage = `You are helping a user with SQL Injection Level ${currentLevel}. Provide a helpful hint without giving away the complete solution. Focus on the technique they should use for this level.`;
+      if (lang === 'ru') {
+        contextMessage = `Вы помогаете пользователю с SQL Injection Уровень ${currentLevel}. Дайте полезную подсказку, не раскрывая полного решения. Сосредоточьтесь на технике, которую следует использовать на этом уровне.`;
+      } else if (lang === 'kz') {
+        contextMessage = `Сіз ${currentLevel}-деңгейдегі SQL Injection-ға көмектесудесіз. Толық шешімді айтпай, пайдалы кеңес беріңіз. Бұл деңгейде қолданылуы керек техникаға назар аударыңыз.`;
+      }
 
       fetch('/gemini/chat', {
         method: 'POST',
@@ -644,14 +657,22 @@
       })
         .then(response => response.json())
         .then(data => {
+          let hintPrefix = 'Hint: ';
+          if (lang === 'ru') hintPrefix = 'Подсказка: ';
+          if (lang === 'kz') hintPrefix = 'Кеңес: ';
           if (data.response) {
-            addMessage('Hint: ' + data.response);
+            addMessage(hintPrefix + data.response);
+          } else if (data.error) {
+            let errorPrefix = 'System: Error - ';
+            if (lang === 'ru') errorPrefix = 'Система: Ошибка - ';
+            if (lang === 'kz') errorPrefix = 'Жүйе: Қате - ';
+            addMessage(errorPrefix + data.error);
           } else {
-            addMessage('Hint: Try looking for SQL injection patterns in the input field. Consider what happens with quotes or SQL keywords.');
+            addMessage('System: Unexpected response: ' + JSON.stringify(data));
           }
         })
         .catch(error => {
-          addMessage('Hint: Check if the input is directly concatenated into the SQL query. Try basic injection patterns.');
+          addMessage('System: Connection error - ' + error.message);
         });
     }
 
@@ -686,10 +707,19 @@
       })
         .then(response => response.json())
         .then(data => {
+          const lang = '{{ curr_lang }}';
+          let assistantPrefix = 'Assistant: ';
+          if (lang === 'ru') assistantPrefix = 'Ассистент: ';
+          if (lang === 'kz') assistantPrefix = 'Көмекші: ';
+          let errorPrefix = 'System: Error - ';
+          if (lang === 'ru') errorPrefix = 'Система: Ошибка - ';
+          if (lang === 'kz') errorPrefix = 'Жүйе: Қате - ';
           if (data.response) {
-            addMessage('Assistant: ' + data.response);
+            addMessage(assistantPrefix + data.response);
+          } else if (data.error) {
+            addMessage(errorPrefix + data.error);
           } else {
-            addMessage('Assistant: Sorry, I cannot process your request right now.');
+            addMessage('System: Unexpected response: ' + JSON.stringify(data));
           }
         })
         .catch(error => {
@@ -698,7 +728,14 @@
     }
 
     function clearChat() {
-      document.getElementById('chatMessages').innerHTML = 'System: Chat cleared. Ready for new questions about Level ' + currentLevel + '!<br>';
+      const lang = '{{ curr_lang }}';
+      let clearText = 'System: Chat cleared. Ready for new questions about Level ' + currentLevel + '!<br>';
+      if (lang === 'ru') {
+        clearText = 'System: Чат очищен. Готов к новым вопросам об Уровне ' + currentLevel + '!<br>';
+      } else if (lang === 'kz') {
+        ext = 'System: Чат тазартылды. ' + currentLevel + '-деңгей туралы жаңа сұрақтарға дайын!<br>';
+      }
+      document.getElementById('chatMessages').innerHTML = clearText;
     }
 
     // Test API health on load
@@ -707,13 +744,23 @@
         const response = await fetch('/gemini/health');
         const data = await response.json();
 
+        const lang = '{{ curr_lang }}';
         if (data.api_configured) {
-          addMessage('System: SQL Assistant ready for Level ' + currentLevel + '.');
+          let readyMsg = 'System: SQL Assistant ready for Level ' + currentLevel + '.';
+          if (lang === 'ru') readyMsg = 'Система: SQL-ассистент готов для Уровня ' + currentLevel + '.';
+          if (lang === 'kz') readyMsg = 'Жүйе: SQL-көмекші ' + currentLevel + '-деңгейге дайын.';
+          addMessage(readyMsg);
         } else {
-          addMessage('System: Assistant not available.');
+          let notAvail = 'System: Assistant not available.';
+          if (lang === 'ru') notAvail = 'Система: Ассистент недоступен.';
+          if (lang === 'kz') notAvail = 'Жүйе: Көмекші қолжетімсіз.';
+          addMessage(notAvail);
         }
       } catch (error) {
-        addMessage('System: Failed to connect to assistant.');
+        let connError = 'System: Failed to connect to assistant.';
+        if (lang === 'ru') connError = 'Система: Не удалось подключиться к ассистенту.';
+        if (lang === 'kz') connError = 'Жүйе: Көмекшіге қосылу сәтсіз болды.';
+        addMessage(connError);
       }
     });
   </script>

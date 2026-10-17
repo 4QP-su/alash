@@ -1,3 +1,4 @@
+import hashlib
 from flask import Blueprint, render_template, request, redirect, url_for, session
 from app.models import (
  is_completed, is_unlocked, mark_completed,
@@ -95,22 +96,33 @@ def csrf_level(level_id):
  message  = ""
  is_won  = False
 
+ # CSRF token for Level 1
+ secret_token = hashlib.md5(b'csrf_lvl1_secret').hexdigest()[:8]
+
  if request.method == 'POST':
   action = request.form.get('action', '')
+  token = request.form.get('csrf_token', '')
 
-  # ── LVL 1: нажатие кнопки LAUNCH ATTACK ──
+  # ── LVL 1: Understanding CSRF - state change without proper auth
   if level_id == 1:
-   if action == 'launch':
+   if action == 'launch' and token == secret_token:
+    # Level 1 teaches that CSRF is about making state-changing requests
     is_won = True
 
-  # ── LVL 2: указан правильный получатель и сумма ──
+  # ── LVL 2: Bypassing basic validation - recipient and amount
   elif level_id == 2:
    if action == 'transfer':
-    is_won = True
+    recipient = request.form.get('recipient', '')
+    amount = request.form.get('amount', '')
+    # Basic validation: require non-empty recipient and positive amount
+    # This teaches that CSRF exploits require valid parameters
+    if recipient and amount and int(amount) > 0:
+     is_won = True
 
-  # ── LVL 3: GET-запрос с параметром атаки ──
+  # ── LVL 3: GET request with attack parameter
   elif level_id == 3:
    evil_param = request.args.get('evil') or request.form.get('evil', '')
+   # Level 3 teaches GET vs POST and parameter manipulation
    if evil_param == 'attack' or action == 'get_attack':
     is_won = True
 
@@ -131,6 +143,7 @@ def csrf_level(level_id):
   hint_bought=hint_bought,
   is_already_completed=already or is_won,
   is_won=is_won,
+  csrf_token=secret_token if level_id == 1 else None,
  )
 
 

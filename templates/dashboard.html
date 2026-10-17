@@ -412,55 +412,30 @@
     /* XP bar */
 
     .xp-block {
-
       margin-top: 12px;
-
     }
-
-
 
     .xp-label {
-
       display: flex;
-
       justify-content: space-between;
-
       font-size: 0.65rem;
-
       color: #555;
-
       margin-bottom: 5px;
-
     }
-
-
 
     .xp-bar-track {
-
       height: 4px;
-
       background: #111;
-
       border-radius: 2px;
-
       overflow: hidden;
-
     }
 
-
-
     .xp-bar-fill {
-
       height: 100%;
-
       background: var(--neon-green);
-
       box-shadow: 0 0 6px var(--neon-green);
-
       border-radius: 2px;
-
       transition: width 1s ease;
-
     }
 
 
@@ -904,6 +879,7 @@
       <div class="topbar-links">
         <a href="/achievements" class="nav-link">TROPHIES</a>
         <a href="/leaderboard" class="nav-link">LEADERBOARD</a>
+        <a href="/stats" class="nav-link">STATISTICS</a>
         <a href="/logout" class="nav-link danger">LOGOUT</a>
       </div>
     </div>
@@ -959,6 +935,7 @@
         <a href="/XSS"><span class="ico"></span> XSS_ATTACKS</a>
         <a href="/achievements"><span class="ico"></span> ACHIEVEMENTS</a>
         <a href="/leaderboard"><span class="ico"></span> LEADERBOARD</a>
+        <a href="/stats"><span class="ico"></span> STATISTICS</a>
         <a href="/profile"><span class="ico"></span> PROFILE</a>
         {% if current_user.is_admin %}
         <a href="/admin" style="color: var(--error-red) !important; border-color: rgba(255,62,62,0.3) !important;">
@@ -980,6 +957,15 @@
           <div class="b-sub">+$100 credited to your account upon login</div>
         </div>
         <span style="color: var(--gold); font-size: 1.2rem;"></span>
+      </div>
+
+      <div style="display: flex; gap: 15px; justify-content: center; margin: 30px 0;">
+        <a href="/leaderboard"
+          style="background: #ffd700; color: #000; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 1rem;">
+          LEADERBOARD</a>
+        <a href="/stats"
+          style="background: #00e5ff; color: #000; padding: 15px 30px; text-decoration: none; font-weight: bold; border-radius: 8px; font-size: 1rem;">
+          MY STATS</a>
       </div>
 
       <div class="section-header">// SELECT_TARGET_MODULE</div>
@@ -1044,6 +1030,76 @@
           </div>
         </div>
 
+        <!-- Leaderboard Card -->
+        <a href="/leaderboard" class="lab-card">
+          <div class="lab-card-icon">🏆</div>
+          <div class="lab-card-title">LEADERBOARD</div>
+          <div class="lab-card-desc">
+            Топ-10 игроков по XP. Сравни свои результаты с другими хакерами.
+          </div>
+          <div class="lab-card-footer">
+            <span style="color: #444">PATH: /leaderboard</span>
+            <span class="tag-ready">VIEW</span>
+          </div>
+        </a>
+
+        <!-- Statistics Card -->
+        <a href="/stats" class="lab-card">
+          <div class="lab-card-icon">📊</div>
+          <div class="lab-card-title">MY_STATISTICS</div>
+          <div class="lab-card-desc">
+            Детальная статистика: попытки, победы, прогресс по модулям.
+          </div>
+          <div class="lab-card-footer">
+            <span style="color: #444">PATH: /stats</span>
+            <span class="tag-ready">VIEW</span>
+          </div>
+        </a>
+
+      </div>
+
+      <div style="display: flex; gap: 20px; justify-content: center; margin-bottom: 40px;">
+        <a href="/leaderboard" style="
+     background: linear-gradient(135deg, #ffd700 0%, #ffaa00 100%);
+     color: #000;
+     padding: 15px 40px;
+     border-radius: 8px;
+     text-decoration: none;
+     font-weight: bold;
+     font-size: 0.9rem;
+     text-transform: uppercase;
+     letter-spacing: 2px;
+     box-shadow: 0 0 20px rgba(255, 215, 0, 0.3);
+     transition: all 0.3s ease;
+     display: flex;
+     align-items: center;
+     gap: 10px;
+    " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 0 30px rgba(255, 215, 0, 0.5)'"
+          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 0 20px rgba(255, 215, 0, 0.3)'">
+          <span style="font-size: 1.5rem;">🏆</span>
+          LEADERBOARD
+        </a>
+
+        <a href="/stats" style="
+     background: linear-gradient(135deg, #00e5ff 0%, #0099cc 100%);
+     color: #000;
+     padding: 15px 40px;
+     border-radius: 8px;
+     text-decoration: none;
+     font-weight: bold;
+     font-size: 0.9rem;
+     text-transform: uppercase;
+     letter-spacing: 2px;
+     box-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+     transition: all 0.3s ease;
+     display: flex;
+     align-items: center;
+     gap: 10px;
+    " onmouseover="this.style.transform='translateY(-3px)'; this.style.boxShadow='0 0 30px rgba(0, 229, 255, 0.5)'"
+          onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 0 20px rgba(0, 229, 255, 0.3)'">
+          <span style="font-size: 1.5rem;">📊</span>
+          MY STATISTICS
+        </a>
       </div>
 
       <div class="section-header">// SYSTEM_LOG</div>
@@ -1219,8 +1275,7 @@
           document.getElementById('admin-terminal').style.display = 'none';
           this.value = '';
         }
-      }
-    });
+      });
   </script>
 
   <!-- Voice Assistant JavaScript -->
@@ -1440,7 +1495,7 @@
 
     // Initialize voice assistant when page loads
     document.addEventListener('DOMContentLoaded', () => {
-      new VoiceAssistant();
+      newoiceAssistant();
     });
   </script>
 
@@ -1613,8 +1668,7 @@
           addMessage('System: Gemini API not configured.');
         }
       } catch (error) {
-        addMessage('System: Failed to connect to server.');
-      }
+        addMessage('System: Failed to connect to rver    }
     });
   </script>
 

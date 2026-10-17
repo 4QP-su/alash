@@ -1,50 +1,107 @@
 from flask import Blueprint, render_template, request, session, redirect, url_for
+import json
+import os
 
 from app.models import (
     get_rank,
     get_leaderboard,
+    LEADERBOARD_TOP_N,
     get_user_stats,
+    get_user_by_username,
+    get_user_leaderboard_position,
     is_completed,
     check_and_give_daily_bonus,
     get_db,
 )
-from app.config import SUPPORTED_LANGS
+from app.config import BASE_DIR, SUPPORTED_LANGS, t_for_lang
 from .utils import login_required, current_user
 
 
 main_bp = Blueprint('main', __name__)
 
 
+def _load_ui_translations(lang: str) -> dict:
+    t = t_for_lang(lang)
+    translations_dir = os.path.join(BASE_DIR, 'translations')
+    ach_path = os.path.join(translations_dir, f'achievements_{lang}.json')
+    try:
+        with open(ach_path, 'r', encoding='utf-8') as f:
+            t.update(json.load(f))
+    except FileNotFoundError:
+        fallback_path = os.path.join(translations_dir, 'achievements_en.json')
+        with open(fallback_path, 'r', encoding='utf-8') as f:
+            t.update(json.load(f))
+    return t
+
+
+def _badge_slug(code: str) -> str:
+    return code.lower().replace('/', '_')
+
+
+def _build_badges(t: dict, badge_defs: list) -> list:
+    badges = []
+    for code, earned in badge_defs:
+        slug = _badge_slug(code)
+        badges.append({
+            'code': code,
+            'title': t.get(f'badge_{slug}_title', code),
+            'desc': t.get(f'badge_{slug}_desc', ''),
+            'earned': earned,
+        })
+    return badges
+
+
 @main_bp.route('/')
-@main_bp.route('/dashboard')
-@login_required
 def index():
-    user = current_user()
-    uid = user['id']
+    # Если пользователь залогинен, показываем dashboard
+    if session.get('user_id'):
+        user = current_user()
+        if not user:
+            session.clear()
+            curr_lang = session.get('lang', 'ru')
+            t = t_for_lang(curr_lang)
+            return render_template('home.html', t=t, curr_lang=curr_lang)
+        uid = user['id']
 
-    check_and_give_daily_bonus(uid)
+        check_and_give_daily_bonus(uid)
 
-    # Guard against negative balance
-    if user['balance'] < 0:
-        conn = get_db()
-        conn.execute("UPDATE users SET balance = 50 WHERE id = ? AND balance < 0", (uid,))
-        conn.commit()
-        conn.close()
+        # Guard against negative balance
+        if user['balance'] < 0:
+            conn = get_db()
+            conn.execute("UPDATE users SET balance = 50 WHERE id = ? AND balance < 0", (uid,))
+            conn.commit()
+            conn.close()
 
-    sql_done = sum(1 for i in range(1, 7) if is_completed(uid, 'sql', i))
-    xss_done = sum(1 for i in range(1, 6) if is_completed(uid, 'xss', i))
-    csrf_done = sum(1 for i in range(1, 4) if is_completed(uid, 'csrf', i))
-    path_done = sum(1 for i in range(1, 4) if is_completed(uid, 'path', i))
-    auth_done = sum(1 for i in range(1, 4) if is_completed(uid, 'auth', i))
+        sql_done = sum(1 for i in range(1, 7) if is_completed(uid, 'sql', i))
+        xss_done = sum(1 for i in range(1, 6) if is_completed(uid, 'xss', i))
+        csrf_done = sum(1 for i in range(1, 4) if is_completed(uid, 'csrf', i))
+        path_done = sum(1 for i in range(1, 4) if is_completed(uid, 'path', i))
+        auth_done = sum(1 for i in range(1, 4) if is_completed(uid, 'auth', i))
 
-    return render_template(
-        'index.html',
-        sql_done=sql_done,
-        xss_done=xss_done,
-        csrf_done=csrf_done,
-        path_done=path_done,
-        auth_done=auth_done,
-    )
+        # Load translations
+        curr_lang = session.get('lang', 'ru')
+        t = t_for_lang(curr_lang)
+
+        return render_template(
+            'index.html',
+            sql_done=sql_done,
+            xss_done=xss_done,
+            csrf_done=csrf_done,
+            path_done=path_done,
+            auth_done=auth_done,
+            t=t,
+            curr_lang=curr_lang,
+        )
+    else:
+        # Если не залогинен, показываем home с переводами
+        curr_lang = session.get('lang', 'ru')
+        t = t_for_lang(curr_lang)
+        return render_template('home.html', t=t, curr_lang=curr_lang)
+
+
+@main_bp.route('/home')
+def home():
+    return redirect(url_for('main.index'))
 
 
 @main_bp.route('/set_lang/<lang>')
@@ -58,21 +115,140 @@ def set_lang(lang):
 @login_required
 def profile():
     user = current_user()
+    uid = user['id']
     rank = get_rank(user['xp'])
-    stats = get_user_stats(user['id'])
-    return render_template('profile.html', user=user, rank=rank, stats=stats)
+    stats = get_user_stats(uid)
+    
+    # Get hints_bought and clean_completions
+    conn = get_db()
+    agg = conn.execute(
+        """
+        SELECT
+            COALESCE(SUM(CASE WHEN hint_bought = 1 THEN 1 ELSE 0 END), 0) AS hints_bought,
+            COALESCE(SUM(CASE WHEN completed = 1 AND hint_bought = 0 THEN 1 ELSE 0 END), 0) AS clean_completions
+        FROM progress
+        WHERE user_id = ?
+        """,
+        (uid,),
+    ).fetchone()
+    conn.close()
+    
+    stats['hints_bought'] = int(agg["hints_bought"])
+    stats['clean_completions'] = int(agg["clean_completions"])
+    
+    # Get module progress
+    levels_total = {'sql': 6, 'xss': 5, 'csrf': 3, 'path': 3, 'auth': 3}
+    module_progress = {
+        cat: sum(1 for i in range(1, total + 1) if is_completed(uid, cat, i))
+        for cat, total in levels_total.items()
+    }
+
+    lang = session.get('lang', 'ru')
+    t = t_for_lang(lang)
+
+    return render_template(
+        'profile.html',
+        user=user,
+        rank=rank,
+        stats=stats,
+        module_progress=module_progress,
+        t=t,
+        curr_lang=lang,
+    )
 
 
 @main_bp.route('/leaderboard')
 @login_required
 def leaderboard():
     user = current_user()
-    board = get_leaderboard(10)
+    board = get_leaderboard(LEADERBOARD_TOP_N)
     for row in board:
-        row['rank_info'] = get_rank(row['xp'])
         row['is_me'] = row['username'] == user['username']
-    return render_template('leaderboard.html', board=board)
+    lang = session.get('lang', 'ru')
+    t = t_for_lang(lang)
+    return render_template('leaderboard.html', board=board, current_user=user, t=t, curr_lang=lang)
 
+
+def _public_profile_context(target_user: dict, viewer_id: int) -> dict:
+    uid = target_user['id']
+    rank = get_rank(target_user['xp'])
+    stats = get_user_stats(uid)
+
+    conn = get_db()
+    agg = conn.execute(
+        """
+        SELECT
+            COALESCE(SUM(CASE WHEN hint_bought = 1 THEN 1 ELSE 0 END), 0) AS hints_bought,
+            COALESCE(SUM(CASE WHEN completed = 1 AND hint_bought = 0 THEN 1 ELSE 0 END), 0) AS clean_completions,
+            COALESCE(SUM(CASE WHEN completed = 1 AND attempts = 1 THEN 1 ELSE 0 END), 0) AS first_try_completions
+        FROM progress
+        WHERE user_id = ?
+        """,
+        (uid,),
+    ).fetchone()
+    conn.close()
+
+    stats['hints_bought'] = int(agg['hints_bought'])
+    stats['clean_completions'] = int(agg['clean_completions'])
+    stats['first_try_completions'] = int(agg['first_try_completions'])
+
+    levels_total = {'sql': 6, 'xss': 5, 'csrf': 3, 'path': 3, 'auth': 3}
+    module_progress = {
+        cat: sum(1 for i in range(1, total + 1) if is_completed(uid, cat, i))
+        for cat, total in levels_total.items()
+    }
+    theory_passed = sum(
+        1 for cat in ('sql', 'xss', 'csrf', 'path', 'auth')
+        if target_user.get(f'{cat}_theory_passed')
+    )
+
+    return {
+        'user': target_user,
+        'rank': rank,
+        'stats': stats,
+        'module_progress': module_progress,
+        'levels_total': levels_total,
+        'leaderboard_position': get_user_leaderboard_position(uid),
+        'theory_passed': theory_passed,
+        'is_own_profile': viewer_id == uid,
+    }
+
+
+@main_bp.route('/user/<username>')
+@login_required
+def user_profile(username):
+    row = get_user_by_username(username)
+    if not row:
+        return redirect(url_for('main.leaderboard'))
+
+    viewer = current_user()
+    target_user = {
+        'id': row['id'],
+        'username': row['username'],
+        'xp': row['xp'],
+        'balance': row['balance'],
+        'created_at': row['created_at'],
+        'sql_theory_passed': row['sql_theory_passed'],
+        'xss_theory_passed': row['xss_theory_passed'],
+        'csrf_theory_passed': row['csrf_theory_passed'],
+        'path_theory_passed': row['path_theory_passed'],
+        'auth_theory_passed': row['auth_theory_passed'],
+    }
+
+    lang = session.get('lang', 'ru')
+    t = t_for_lang(lang)
+
+    ctx = _public_profile_context(target_user, viewer['id'])
+    ctx['t'] = t
+    ctx['curr_lang'] = lang
+    return render_template('user_profile.html', **ctx)
+
+
+@main_bp.route('/stats')
+@login_required
+def stats():
+    # Redirect to profile since stats are now integrated there
+    return redirect(url_for('main.profile'))
 
 @main_bp.route('/achievements')
 @login_required
@@ -112,42 +288,43 @@ def achievements():
         bool(user[f"{cat}_theory_passed"]) for cat in ("sql", "xss", "csrf", "path", "auth")
     )
 
-    badges = [
-        {"code": "SQL/INIT/01", "title": "SQL ENTRY", "desc": "Complete SQL level 1.", "earned": completed["sql"] >= 1},
-        {"code": "XSS/INIT/01", "title": "XSS ENTRY", "desc": "Complete XSS level 1.", "earned": completed["xss"] >= 1},
-        {"code": "CSRF/INIT/01", "title": "CSRF ENTRY", "desc": "Complete CSRF level 1.", "earned": completed["csrf"] >= 1},
-        {"code": "PATH/INIT/01", "title": "PATH ENTRY", "desc": "Complete Path Traversal level 1.", "earned": completed["path"] >= 1},
-        {"code": "AUTH/INIT/01", "title": "AUTH ENTRY", "desc": "Complete Auth Bypass level 1.", "earned": completed["auth"] >= 1},
-
-        {"code": "SQL/MASTER/ALL", "title": "SQL MASTER", "desc": "Finish all SQL levels.", "earned": completed["sql"] == levels_total["sql"]},
-        {"code": "XSS/MASTER/ALL", "title": "XSS MASTER", "desc": "Finish all XSS levels.", "earned": completed["xss"] == levels_total["xss"]},
-        {"code": "CSRF/MASTER/ALL", "title": "CSRF MASTER", "desc": "Finish all CSRF levels.", "earned": completed["csrf"] == levels_total["csrf"]},
-        {"code": "PATH/MASTER/ALL", "title": "PATH MASTER", "desc": "Finish all Path levels.", "earned": completed["path"] == levels_total["path"]},
-        {"code": "AUTH/MASTER/ALL", "title": "AUTH MASTER", "desc": "Finish all Auth levels.", "earned": completed["auth"] == levels_total["auth"]},
-
-        {"code": "THEORY/CORE/05", "title": "THEORY CERTIFIED", "desc": "Pass theory quizzes in all 5 modules.", "earned": all_theory_passed},
-        {"code": "GLOBAL/100PCT", "title": "FULL STACK THREAT", "desc": "Complete all module levels.", "earned": total_completed == total_levels},
-
-        {"code": "EXEC/FIRST/03", "title": "COLD START", "desc": "Complete 3 levels on first try.", "earned": first_try_completions >= 3},
-        {"code": "EXEC/FIRST/10", "title": "NO WARMUP", "desc": "Complete 10 levels on first try.", "earned": first_try_completions >= 10},
-        {"code": "EXEC/CLEAN/08", "title": "CLEAN OPERATOR", "desc": "Complete 8 levels without buying hints.", "earned": clean_completions >= 8},
-        {"code": "EXEC/CLEAN/ALL", "title": "NO-HINT HERO", "desc": "Complete all levels without hints.", "earned": total_completed == total_levels and clean_completions == total_levels},
-
-        {"code": "ECON/BAL/1000", "title": "BLACK MARKET WHALE", "desc": "Reach $1000 balance.", "earned": user["balance"] >= 1000},
-        {"code": "ECON/BAL/2500", "title": "SHADOW TREASURY", "desc": "Reach $2500 balance.", "earned": user["balance"] >= 2500},
-        {"code": "ECON/SHOP/03", "title": "DATA ADDICT", "desc": "Buy 3 hints.", "earned": hints_bought >= 3},
-        {"code": "ECON/SHOP/08", "title": "INTEL BROKER", "desc": "Buy 8 hints.", "earned": hints_bought >= 8},
-
-        {"code": "OPS/GRIND/30", "title": "PERSISTENT", "desc": "Make 30 total attempts.", "earned": total_attempts >= 30},
-        {"code": "OPS/GRIND/75", "title": "RELENTLESS", "desc": "Make 75 total attempts.", "earned": total_attempts >= 75},
+    badge_defs = [
+        ("SQL/INIT/01", completed["sql"] >= 1),
+        ("XSS/INIT/01", completed["xss"] >= 1),
+        ("CSRF/INIT/01", completed["csrf"] >= 1),
+        ("PATH/INIT/01", completed["path"] >= 1),
+        ("AUTH/INIT/01", completed["auth"] >= 1),
+        ("SQL/MASTER/ALL", completed["sql"] == levels_total["sql"]),
+        ("XSS/MASTER/ALL", completed["xss"] == levels_total["xss"]),
+        ("CSRF/MASTER/ALL", completed["csrf"] == levels_total["csrf"]),
+        ("PATH/MASTER/ALL", completed["path"] == levels_total["path"]),
+        ("AUTH/MASTER/ALL", completed["auth"] == levels_total["auth"]),
+        ("THEORY/CORE/05", all_theory_passed),
+        ("GLOBAL/100PCT", total_completed == total_levels),
+        ("EXEC/FIRST/03", first_try_completions >= 3),
+        ("EXEC/FIRST/10", first_try_completions >= 10),
+        ("EXEC/CLEAN/08", clean_completions >= 8),
+        ("EXEC/CLEAN/ALL", total_completed == total_levels and clean_completions == total_levels),
+        ("ECON/BAL/1000", user["balance"] >= 1000),
+        ("ECON/BAL/2500", user["balance"] >= 2500),
+        ("ECON/SHOP/03", hints_bought >= 3),
+        ("ECON/SHOP/08", hints_bought >= 8),
+        ("OPS/GRIND/30", total_attempts >= 30),
+        ("OPS/GRIND/75", total_attempts >= 75),
     ]
 
+    lang = session.get('lang', 'ru')
+    t = _load_ui_translations(lang)
+    badges = _build_badges(t, badge_defs)
     unlocked_count = sum(1 for b in badges if b["earned"])
+
     return render_template(
         'achievements.html',
         badges=badges,
         unlocked_count=unlocked_count,
         total_badges=len(badges),
+        t=t,
+        curr_lang=lang,
     )
 
 

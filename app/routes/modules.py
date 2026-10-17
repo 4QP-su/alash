@@ -220,15 +220,20 @@ def csrf_level(level_id):
 
 
 
+ # CSRF токен для Level 1 (защита через токен)
+ secret_token = hashlib.md5(b'csrf_lvl1_secret').hexdigest()[:8]
+
  if request.method == 'POST':
 
   action  = request.form.get('action', '')
+
+  token   = request.form.get('csrf_token', '')
 
   evil_param = request.args.get('evil') or request.form.get('evil', '')
 
   is_won = (
 
-   (level_id == 1 and action == 'launch') or
+   (level_id == 1 and action == 'launch' and token == secret_token) or
 
    (level_id == 2 and action == 'transfer') or
 
@@ -248,7 +253,13 @@ def csrf_level(level_id):
 
   elif not is_won:
 
-   message = " Атака не удалась. Попробуй ещё раз."
+   if level_id == 1 and action == 'launch' and not token:
+
+    message = " ❌ ACCESS DENIED: Требуется CSRF-токен! Посмотри в исходный код (Ctrl+U) и найди TOKEN_REQUIRED."
+
+   else:
+
+    message = " Атака не удалась. Попробуй ещё раз."
 
 
 
@@ -263,6 +274,12 @@ def csrf_level(level_id):
   message=message, hint_bought=hint_bought,
 
   is_already_completed=already or is_won, is_won=is_won,
+
+  hint_price=150,
+
+  surrender_price=100,
+
+  csrf_token=secret_token if level_id == 1 else None,
 
  )
 
@@ -486,6 +503,10 @@ def path_level(level_id):
 
   file_content=file_content, target_file=target_file,
 
+  hint_price=150,
+
+  surrender_price=100,
+
  )
 
 
@@ -697,6 +718,10 @@ def auth_level(level_id):
   is_already_completed=already or is_won, is_won=is_won,
 
   weak_passwords=WEAK_PASSWORDS, extra=extra,
+
+  hint_price=150,
+
+  surrender_price=100,
 
  )
 

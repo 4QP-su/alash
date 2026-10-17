@@ -1,0 +1,235 @@
+{# Universal Chat Assistant for all level types #}
+{% set assistant_name = assistant_name|default('ASSISTANT') %}
+{% set category = category|default('general') %}
+
+<!-- Text Chat Assistant -->
+<div style="position: fixed; bottom: 20px; right: 20px; z-index: 9999;">
+  <button onclick="toggleChat()" style="
+ width: 60px;
+ height: 60px;
+ border-radius: 50%;
+ border: 2px solid var(--primary-green);
+ background: var(--deep-bg);
+ color: var(--primary-green);
+ font-size: 14px;
+ cursor: pointer;
+ box-shadow: 0 0 20px rgba(0, 255, 65, 0.5);
+ transition: all 0.3s ease;
+ display: flex;
+ align-items: center;
+ justify-content: center;
+ font-weight: bold;
+" title="{{ assistant_name }} - Ask for hints">
+    <span id="chatBtnIcon">chat</span>
+  </button>
+
+  <div id="chatBox" style="
+ display: none;
+ position: absolute;
+ bottom: 80px;
+ right: 0;
+ width: 380px;
+ height: 450px;
+ background: var(--panel-bg);
+ border: 1px solid var(--primary-green);
+ border-radius: 10px;
+ padding: 15px;
+ overflow-y: auto;
+">
+    <div style="color: var(--primary-green); font-weight: bold; margin-bottom: 10px;">{{ assistant_name }}</div>
+    <div id="chatMessages"
+      style="color: var(--primary-green); font-family: monospace; font-size: 12px; height: 320px; overflow-y: auto; margin-bottom: 10px;">
+      {% if curr_lang == 'ru' %}System: {{ assistant_name }}. Задавайте вопросы про этот уровень!{% elif curr_lang ==
+      'kz'
+      %}System: {{ assistant_name }}. Бұл деңгей туралы сұрақтар қойыңыз!{% else %}System: I'm your {{
+      assistant_name|lower }}.
+      Ask me for hints about this level!{% endif %}
+    </div>
+    <div style="margin-top: 15px;">
+      <input type="text" id="textInput"
+        placeholder="{% if curr_lang == 'ru' %}Введите текст...{% elif curr_lang == 'kz' %}Мәтін енгізу...{% else %}Type message...{% endif %}"
+        style="
+   background: var(--deep-bg);
+   border: 1px solid var(--primary-green);
+   color: var(--primary-green);
+   padding: 8px;
+   margin-right: 10px;
+   border-radius: 4px;
+   font-family: monospace;
+   width: 200px;
+  " onkeypress="if(event.key === 'Enter') sendTextMessage()">
+      <button onclick="askForHint()" style="
+   background: var(--cyan-accent);
+   color: var(--deep-bg);
+   border: none;
+   padding: 8px 15px;
+   margin-right: 10px;
+   cursor: pointer;
+   font-family: monospace;
+  ">{% if curr_lang == 'ru' %}Hint{% elif curr_lang == 'kz' %}Hint{% else %}Hint{% endif %}</button>
+      <button onclick="clearChat()" style="
+   background: #666;
+   color: white;
+   border: none;
+   padding: 8px 15px;
+   cursor: pointer;
+   font-family: monospace;
+  ">{% if curr_lang == 'ru' %}Clear{% elif curr_lang == 'kz' %}Clear{% else %}Clear{% endif %}</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentLevel = {{ level.id | default (1, true) }};
+  let levelTitle = "{{ level.title | default('Level', true) }}";
+  let category = "{{ category }}";
+  let lang = '{{ curr_lang }}';
+
+  function toggleChat() {
+    const chatBox = document.getElementById('chatBox');
+    const icon = document.getElementById('chatBtnIcon');
+
+    if (chatBox.style.display === 'none') {
+      chatBox.style.display = 'block';
+      icon.textContent = 'close';
+    } else {
+      chatBox.style.display = 'none';
+      icon.textContent = 'chat';
+    }
+  }
+
+  function askForHint() {
+    let loadingText = 'System: Getting hint for Level ' + currentLevel + '...';
+    if (lang === 'ru') loadingText = 'System: Получаем подсказку для Уровня ' + currentLevel + '...';
+    if (lang === 'kz') loadingText = 'System: ' + currentLevel + '-деңгейге кеңес алу...';
+    addMessage(loadingText);
+
+    let contextMessage = `You are helping a user with ${category.toUpperCase()} Level ${currentLevel}. Provide a helpful hint without giving away the complete solution. Focus on the technique they should use for this level.`;
+    if (lang === 'ru') {
+      contextMessage = `Вы помогаете пользователю с ${category.toUpperCase()} Уровень ${currentLevel}. Дайте полезную подсказку, не раскрывая полного решения.`;
+    } else if (lang === 'kz') {
+      contextMessage = `Сіз ${currentLevel}-деңгейдегі ${category.toUpperCase()}-ға көмектесудесіз. Толық шешімді айтпай, пайдалы кеңес беріңіз.`;
+    }
+
+    fetch('/gemini/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: contextMessage,
+        type: 'hint',
+        category: category
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+        let hintPrefix = 'Hint: ';
+        if (lang === 'ru') hintPrefix = 'Подсказка: ';
+        if (lang === 'kz') hintPrefix = 'Кеңес: ';
+        if (data.response) {
+          addMessage(hintPrefix + data.response);
+        } else if (data.error) {
+          let errorPrefix = 'System: Error - ';
+          if (lang === 'ru') errorPrefix = 'Система: Ошибка - ';
+          if (lang === 'kz') errorPrefix = 'Жүйе: Қате - ';
+          addMessage(errorPrefix + data.error);
+        } else {
+          addMessage('System: Unexpected response: ' + JSON.stringify(data));
+        }
+      })
+      .catch(error => {
+        addMessage('System: Connection error - ' + error.message);
+      });
+  }
+
+  function addMessage(text) {
+    const messages = document.getElementById('chatMessages');
+    const messageDiv = document.createElement('div');
+    messageDiv.style.cssText = 'margin-bottom: 8px; padding: 5px; border-left: 2px solid var(--primary-green); padding-left: 8px;';
+    messageDiv.textContent = text;
+    messages.appendChild(messageDiv);
+    messages.scrollTop = messages.scrollHeight;
+  }
+
+  function sendTextMessage() {
+    const input = document.getElementById('textInput');
+    const message = input.value.trim();
+
+    if (!message) return;
+
+    input.value = '';
+    let youPrefix = 'You: ';
+    if (lang === 'ru') youPrefix = 'Вы: ';
+    if (lang === 'kz') youPrefix = 'Сіз: ';
+    addMessage(youPrefix + message);
+
+    fetch('/gemini/chat', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        message: message,
+        type: 'text',
+        category: category
+      })
+    })
+      .then(response => response.json())
+      .then(data => {
+        let assistantPrefix = 'Assistant: ';
+        if (lang === 'ru') assistantPrefix = 'Ассистент: ';
+        if (lang === 'kz') assistantPrefix = 'Көмекші: ';
+        let errorPrefix = 'System: Error - ';
+        if (lang === 'ru') errorPrefix = 'Система: Ошибка - ';
+        if (lang === 'kz') errorPrefix = 'Жүйе: Қате - ';
+        if (data.response) {
+          addMessage(assistantPrefix + data.response);
+        } else if (data.error) {
+          addMessage(errorPrefix + data.error);
+        } else {
+          addMessage('System: Unexpected response: ' + JSON.stringify(data));
+        }
+      })
+      .catch(error => {
+        let connError = 'System: Connection error - ';
+        if (lang === 'ru') connError = 'Система: Ошибка соединения - ';
+        if (lang === 'kz') connError = 'Жүйе: Қосылу қатесі - ';
+        addMessage(connError + error.message);
+      });
+  }
+
+  function clearChat() {
+    let clearText = 'System: Chat cleared. Ready for new questions about Level ' + currentLevel + '!<br>';
+    if (lang === 'ru') {
+      clearText = 'System: Чат очищен. Готов к новым вопросам об Уровне ' + currentLevel + '!<br>';
+    } else if (lang === 'kz') {
+      clearText = 'System: Чат тазартылды. ' + currentLevel + '-деңгей туралы жаңа сұрақтарға дайын!<br>';
+    }
+    document.getElementById('chatMessages').innerHTML = clearText;
+  }
+
+  window.addEventListener('load', async function () {
+    try {
+      const response = await fetch('/gemini/health');
+      const data = await response.json();
+
+      if (data.api_configured) {
+        let readyMsg = 'System: ' + '{{ assistant_name }}' + ' ready for Level ' + currentLevel + '.';
+        if (lang === 'ru') readyMsg = 'Система: ' + '{{ assistant_name }}' + ' готов для Уровня ' + currentLevel + '.';
+        if (lang === 'kz') readyMsg = 'Жүйе: ' + '{{ assistant_name }}' + ' ' + currentLevel + '-деңгейге дайын.';
+        addMessage(readyMsg);
+      } else {
+        let notAvail = 'System: Assistant not available.';
+        if (lang === 'ru') notAvail = 'Система: Ассистент недоступен.';
+        if (lang === 'kz') notAvail = 'Жүйе: Көмекші қолжетімсіз.';
+        addMessage(notAvail);
+      }
+    } catch (error) {
+      let connError = 'System: Failed to connect to assistant.';
+      if (lang === 'ru') connError = 'Система: Не удалось подключиться к ассистенту.';
+      if (lang === 'kz') connError = 'Жүйе: Көмекшіге қосылу сәтсіз болды.';
+      addMessage(connError);
+    }
+  });
+</script>
